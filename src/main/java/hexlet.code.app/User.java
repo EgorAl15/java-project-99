@@ -1,4 +1,4 @@
-package hexlet.code.app.model;
+package hexlet.code.app;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,11 +19,8 @@ public class User {
     private Long id;
 
     private String firstName;
-
     private String lastName;
-
     private String email;
-
     private String password;
 
     @CreationTimestamp
