@@ -6,6 +6,8 @@ import hexlet.code.app.dto.UserResponseDto;
 import hexlet.code.app.dto.UserUpdateDto;
 import hexlet.code.app.exception.ResourceNotFoundException;
 import hexlet.code.app.repository.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -48,9 +50,7 @@ public class UserService {
         user.setEmail(dto.getEmail());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        var savedUser = userRepository.save(user);
-
-        return toDto(savedUser);
+        return toDto(userRepository.save(user));
     }
 
     public UserResponseDto update(Long id, UserUpdateDto dto) {
@@ -58,6 +58,8 @@ public class UserService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("User not found")
                 );
+
+        checkOwner(user);
 
         if (dto.getFirstName() != null) {
             user.setFirstName(dto.getFirstName());
@@ -75,9 +77,7 @@ public class UserService {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
-        var updatedUser = userRepository.save(user);
-
-        return toDto(updatedUser);
+        return toDto(userRepository.save(user));
     }
 
     public void delete(Long id) {
@@ -86,7 +86,20 @@ public class UserService {
                         new ResourceNotFoundException("User not found")
                 );
 
+        checkOwner(user);
+
         userRepository.delete(user);
+    }
+
+    private void checkOwner(User user) {
+        var authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        var currentEmail = authentication.getName();
+
+        if (!user.getEmail().equals(currentEmail)) {
+            throw new AccessDeniedException("Access denied");
+        }
     }
 
     private UserResponseDto toDto(User user) {

@@ -1,6 +1,5 @@
 package hexlet.code.app.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.app.User;
 import hexlet.code.app.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -29,15 +29,44 @@ class UserControllerTest {
     private UserRepository userRepository;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
         userRepository.deleteAll();
+
+        var admin = new User();
+        admin.setEmail("hexlet@example.com");
+        admin.setPassword(passwordEncoder.encode("qwerty"));
+
+        userRepository.save(admin);
+    }
+
+    private String getToken(String email, String password) throws Exception {
+        var request = """
+                {
+                  "username": "%s",
+                  "password": "%s"
+                }
+                """.formatted(email, password);
+
+        var result = mockMvc.perform(post("/api/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        return result.getResponse().getContentAsString();
+    }
+
+    private String getAdminToken() throws Exception {
+        return getToken("hexlet@example.com", "qwerty");
     }
 
     @Test
     void testCreateUser() throws Exception {
+        var token = getAdminToken();
+
         var request = """
                 {
                   "email": "john@example.com",
@@ -48,6 +77,7 @@ class UserControllerTest {
                 """;
 
         mockMvc.perform(post("/api/users")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
@@ -59,29 +89,36 @@ class UserControllerTest {
 
     @Test
     void testGetUsers() throws Exception {
+        var token = getAdminToken();
+
         var user = new User();
         user.setEmail("john@example.com");
-        user.setPassword("hashed-password");
+        user.setPassword(passwordEncoder.encode("secret"));
         user.setFirstName("John");
         user.setLastName("Doe");
 
         userRepository.save(user);
 
-        mockMvc.perform(get("/api/users"))
+        mockMvc.perform(get("/api/users")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].email").value("john@example.com"))
+                .andExpect(jsonPath("$[*].email")
+                        .value(org.hamcrest.Matchers.hasItem("john@example.com")))
                 .andExpect(jsonPath("$[0].password").doesNotExist());
     }
 
     @Test
     void testGetUserById() throws Exception {
+        var token = getAdminToken();
+
         var user = new User();
         user.setEmail("john@example.com");
-        user.setPassword("hashed-password");
+        user.setPassword(passwordEncoder.encode("secret"));
 
         user = userRepository.save(user);
 
-        mockMvc.perform(get("/api/users/" + user.getId()))
+        mockMvc.perform(get("/api/users/" + user.getId())
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("john@example.com"))
                 .andExpect(jsonPath("$.password").doesNotExist());
@@ -90,12 +127,14 @@ class UserControllerTest {
     @Test
     void testUpdateUserPartially() throws Exception {
         var user = new User();
-        user.setEmail("old@example.com");
-        user.setPassword("hashed-password");
+        user.setEmail("john@example.com");
+        user.setPassword(passwordEncoder.encode("secret"));
         user.setFirstName("John");
         user.setLastName("Doe");
 
         user = userRepository.save(user);
+
+        var token = getToken("john@example.com", "secret");
 
         var request = """
                 {
@@ -104,6 +143,7 @@ class UserControllerTest {
                 """;
 
         mockMvc.perform(put("/api/users/" + user.getId())
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isOk())
@@ -116,19 +156,27 @@ class UserControllerTest {
     void testDeleteUser() throws Exception {
         var user = new User();
         user.setEmail("john@example.com");
-        user.setPassword("hashed-password");
+        user.setPassword(passwordEncoder.encode("secret"));
 
         user = userRepository.save(user);
 
-        mockMvc.perform(delete("/api/users/" + user.getId()))
+        var token = getToken("john@example.com", "secret");
+
+        mockMvc.perform(delete("/api/users/" + user.getId())
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/users/" + user.getId()))
+        var adminToken = getAdminToken();
+
+        mockMvc.perform(get("/api/users/" + user.getId())
+                        .header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void testInvalidUserReturns400() throws Exception {
+        var token = getAdminToken();
+
         var request = """
                 {
                   "email": "bad-email",
@@ -137,6 +185,7 @@ class UserControllerTest {
                 """;
 
         mockMvc.perform(post("/api/users")
+                        .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest());
@@ -144,7 +193,84 @@ class UserControllerTest {
 
     @Test
     void testUserNotFound() throws Exception {
-        mockMvc.perform(get("/api/users/999999"))
+        var token = getAdminToken();
+
+        mockMvc.perform(get("/api/users/999999")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void testUsersRequireAuthentication() throws Exception {
+        mockMvc.perform(get("/api/users"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testLoginWithWrongPasswordReturns401() throws Exception {
+        var request = """
+                {
+                  "username": "hexlet@example.com",
+                  "password": "wrong-password"
+                }
+                """;
+
+        mockMvc.perform(post("/api/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testLoginUnknownUserReturns401() throws Exception {
+        var request = """
+                {
+                  "username": "unknown@example.com",
+                  "password": "qwerty"
+                }
+                """;
+
+        mockMvc.perform(post("/api/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testCannotUpdateAnotherUser() throws Exception {
+        var token = getAdminToken();
+
+        var user = new User();
+        user.setEmail("john@example.com");
+        user.setPassword(passwordEncoder.encode("secret"));
+
+        user = userRepository.save(user);
+
+        var request = """
+                {
+                  "firstName": "Changed"
+                }
+                """;
+
+        mockMvc.perform(put("/api/users/" + user.getId())
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testCannotDeleteAnotherUser() throws Exception {
+        var token = getAdminToken();
+
+        var user = new User();
+        user.setEmail("john@example.com");
+        user.setPassword(passwordEncoder.encode("secret"));
+
+        user = userRepository.save(user);
+
+        mockMvc.perform(delete("/api/users/" + user.getId())
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
     }
 }
