@@ -5,7 +5,9 @@ import hexlet.code.app.dto.UserResponseDto;
 import hexlet.code.app.dto.UserUpdateDto;
 import hexlet.code.app.service.UserService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,8 +23,16 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserResponseDto> index() {
-        return userService.getAll();
+    public ResponseEntity<List<UserResponseDto>> index() {
+        var users = userService.getAll();
+
+        var headers = new HttpHeaders();
+        headers.add("X-Total-Count", String.valueOf(users.size()));
+
+        return ResponseEntity
+                .ok()
+                .headers(headers)
+                .body(users);
     }
 
     @GetMapping("/{id}")
