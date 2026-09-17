@@ -50,7 +50,8 @@ class TaskControllerTest {
     private PasswordEncoder passwordEncoder;
 
     private User user;
-    private TaskStatus status;
+    private TaskStatus draftStatus;
+    private TaskStatus reviewStatus;
     private Label feature;
     private Label bug;
 
@@ -66,10 +67,15 @@ class TaskControllerTest {
         user.setPassword(passwordEncoder.encode("qwerty"));
         user = userRepository.save(user);
 
-        status = new TaskStatus();
-        status.setName("Draft");
-        status.setSlug("draft");
-        status = taskStatusRepository.save(status);
+        draftStatus = new TaskStatus();
+        draftStatus.setName("Draft");
+        draftStatus.setSlug("draft");
+        draftStatus = taskStatusRepository.save(draftStatus);
+
+        reviewStatus = new TaskStatus();
+        reviewStatus.setName("To Review");
+        reviewStatus.setSlug("to_review");
+        reviewStatus = taskStatusRepository.save(reviewStatus);
 
         feature = new Label();
         feature.setName("feature");
@@ -129,7 +135,12 @@ class TaskControllerTest {
 
     @Test
     void testGetTasks() throws Exception {
-        var task = createTask();
+        var task = createTask(
+                "Test title",
+                "Test content",
+                draftStatus,
+                Set.of(feature, bug)
+        );
 
         mockMvc.perform(get("/api/tasks")
                         .header("Authorization", "Bearer " + getToken()))
@@ -143,7 +154,12 @@ class TaskControllerTest {
 
     @Test
     void testGetTaskById() throws Exception {
-        var task = createTask();
+        var task = createTask(
+                "Test title",
+                "Test content",
+                draftStatus,
+                Set.of(feature, bug)
+        );
 
         mockMvc.perform(get("/api/tasks/" + task.getId())
                         .header("Authorization", "Bearer " + getToken()))
@@ -157,7 +173,12 @@ class TaskControllerTest {
 
     @Test
     void testUpdateTaskPartially() throws Exception {
-        var task = createTask();
+        var task = createTask(
+                "Test title",
+                "Test content",
+                draftStatus,
+                Set.of(feature, bug)
+        );
 
         var request = """
                 {
@@ -182,7 +203,12 @@ class TaskControllerTest {
 
     @Test
     void testDeleteTask() throws Exception {
-        var task = createTask();
+        var task = createTask(
+                "Test title",
+                "Test content",
+                draftStatus,
+                Set.of(feature)
+        );
 
         mockMvc.perform(delete("/api/tasks/" + task.getId())
                         .header("Authorization", "Bearer " + getToken()))
@@ -217,7 +243,12 @@ class TaskControllerTest {
 
     @Test
     void testCannotDeleteAssignedUser() throws Exception {
-        createTask();
+        createTask(
+                "Test title",
+                "Test content",
+                draftStatus,
+                Set.of(feature)
+        );
 
         mockMvc.perform(delete("/api/users/" + user.getId())
                         .header("Authorization", "Bearer " + getToken()))
@@ -226,31 +257,159 @@ class TaskControllerTest {
 
     @Test
     void testCannotDeleteUsedStatus() throws Exception {
-        createTask();
+        createTask(
+                "Test title",
+                "Test content",
+                draftStatus,
+                Set.of(feature)
+        );
 
-        mockMvc.perform(delete("/api/task_statuses/" + status.getId())
+        mockMvc.perform(delete("/api/task_statuses/" + draftStatus.getId())
                         .header("Authorization", "Bearer " + getToken()))
                 .andExpect(status().isConflict());
     }
 
     @Test
     void testCannotDeleteUsedLabel() throws Exception {
-        createTask();
+        createTask(
+                "Test title",
+                "Test content",
+                draftStatus,
+                Set.of(feature)
+        );
 
         mockMvc.perform(delete("/api/labels/" + feature.getId())
                         .header("Authorization", "Bearer " + getToken()))
                 .andExpect(status().isConflict());
     }
 
-    private Task createTask() {
+    @Test
+    void testFilterByTitle() throws Exception {
+        createFilterTasks();
+
+        mockMvc.perform(get("/api/tasks")
+                        .param("titleCont", "create")
+                        .header("Authorization", "Bearer " + getToken()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$[0].title")
+                        .value("Create new version"));
+    }
+
+    @Test
+    void testFilterByAssignee() throws Exception {
+        createFilterTasks();
+
+        var anotherUser = new User();
+        anotherUser.setEmail("another@example.com");
+        anotherUser.setPassword(passwordEncoder.encode("qwerty"));
+        anotherUser = userRepository.save(anotherUser);
+
+        var task = new Task();
+        task.setName("Another user task");
+        task.setDescription("Other task");
+        task.setTaskStatus(draftStatus);
+        task.setAssignee(anotherUser);
+        task.setLabels(Set.of(feature));
+        taskRepository.save(task);
+
+        mockMvc.perform(get("/api/tasks")
+                        .param(
+                                "assigneeId",
+                                user.getId().toString()
+                        )
+                        .header("Authorization", "Bearer " + getToken()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "2"));
+    }
+
+    @Test
+    void testFilterByStatus() throws Exception {
+        createFilterTasks();
+
+        mockMvc.perform(get("/api/tasks")
+                        .param("status", "to_review")
+                        .header("Authorization", "Bearer " + getToken()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$[0].title")
+                        .value("Fix application bug"))
+                .andExpect(jsonPath("$[0].status")
+                        .value("to_review"));
+    }
+
+    @Test
+    void testFilterByLabel() throws Exception {
+        createFilterTasks();
+
+        mockMvc.perform(get("/api/tasks")
+                        .param(
+                                "labelId",
+                                bug.getId().toString()
+                        )
+                        .header("Authorization", "Bearer " + getToken()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$[0].title")
+                        .value("Fix application bug"));
+    }
+
+    @Test
+    void testFilterByAllParameters() throws Exception {
+        createFilterTasks();
+
+        mockMvc.perform(get("/api/tasks")
+                        .param("titleCont", "fix")
+                        .param(
+                                "assigneeId",
+                                user.getId().toString()
+                        )
+                        .param("status", "to_review")
+                        .param(
+                                "labelId",
+                                bug.getId().toString()
+                        )
+                        .header("Authorization", "Bearer " + getToken()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("X-Total-Count", "1"))
+                .andExpect(jsonPath("$[0].title")
+                        .value("Fix application bug"))
+                .andExpect(jsonPath("$[0].status")
+                        .value("to_review"))
+                .andExpect(jsonPath("$[0].assignee_id")
+                        .value(user.getId()));
+    }
+
+    private void createFilterTasks() {
+        createTask(
+                "Create new version",
+                "First task",
+                draftStatus,
+                Set.of(feature)
+        );
+
+        createTask(
+                "Fix application bug",
+                "Second task",
+                reviewStatus,
+                Set.of(bug)
+        );
+    }
+
+    private Task createTask(
+            String title,
+            String content,
+            TaskStatus taskStatus,
+            Set<Label> labels) {
+
         var task = new Task();
 
-        task.setName("Test title");
+        task.setName(title);
         task.setIndex(12);
-        task.setDescription("Test content");
-        task.setTaskStatus(status);
+        task.setDescription(content);
+        task.setTaskStatus(taskStatus);
         task.setAssignee(user);
-        task.setLabels(Set.of(feature, bug));
+        task.setLabels(labels);
 
         return taskRepository.save(task);
     }

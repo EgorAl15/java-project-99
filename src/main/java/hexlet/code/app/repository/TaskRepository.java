@@ -5,8 +5,11 @@ import hexlet.code.app.Task;
 import hexlet.code.app.TaskStatus;
 import hexlet.code.app.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface TaskRepository extends JpaRepository<Task, Long> {
+public interface TaskRepository extends
+        JpaRepository<Task, Long>,
+        JpaSpecificationExecutor<Task> {
 
     boolean existsByAssignee(User assignee);
 

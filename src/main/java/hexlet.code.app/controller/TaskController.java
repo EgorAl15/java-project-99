@@ -8,7 +8,16 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -23,11 +32,24 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponseDto>> index() {
-        var tasks = taskService.getAll();
+    public ResponseEntity<List<TaskResponseDto>> index(
+            @RequestParam(required = false) String titleCont,
+            @RequestParam(required = false) Long assigneeId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long labelId) {
+
+        var tasks = taskService.getAll(
+                titleCont,
+                assigneeId,
+                status,
+                labelId
+        );
 
         var headers = new HttpHeaders();
-        headers.add("X-Total-Count", String.valueOf(tasks.size()));
+        headers.add(
+                "X-Total-Count",
+                String.valueOf(tasks.size())
+        );
 
         return ResponseEntity
                 .ok()
@@ -44,6 +66,7 @@ public class TaskController {
     @ResponseStatus(HttpStatus.CREATED)
     public TaskResponseDto create(
             @Valid @RequestBody TaskCreateDto dto) {
+
         return taskService.create(dto);
     }
 
@@ -51,6 +74,7 @@ public class TaskController {
     public TaskResponseDto update(
             @PathVariable Long id,
             @RequestBody TaskUpdateDto dto) {
+
         return taskService.update(id, dto);
     }
 

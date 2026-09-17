@@ -10,6 +10,8 @@ import hexlet.code.app.repository.LabelRepository;
 import hexlet.code.app.repository.TaskRepository;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.repository.UserRepository;
+import hexlet.code.app.specification.TaskSpecification;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -37,8 +39,20 @@ public class TaskService {
         this.labelRepository = labelRepository;
     }
 
-    public List<TaskResponseDto> getAll() {
-        return taskRepository.findAll()
+    public List<TaskResponseDto> getAll(
+            String titleCont,
+            Long assigneeId,
+            String status,
+            Long labelId) {
+
+        Specification<Task> specification =
+                Specification
+                        .where(TaskSpecification.titleContains(titleCont))
+                        .and(TaskSpecification.hasAssignee(assigneeId))
+                        .and(TaskSpecification.hasStatus(status))
+                        .and(TaskSpecification.hasLabel(labelId));
+
+        return taskRepository.findAll(specification)
                 .stream()
                 .map(this::toDto)
                 .toList();
