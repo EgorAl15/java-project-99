@@ -1,16 +1,21 @@
 package hexlet.code.app.service;
 
+import hexlet.code.app.Label;
 import hexlet.code.app.Task;
 import hexlet.code.app.dto.TaskCreateDto;
 import hexlet.code.app.dto.TaskResponseDto;
 import hexlet.code.app.dto.TaskUpdateDto;
 import hexlet.code.app.exception.ResourceNotFoundException;
+import hexlet.code.app.repository.LabelRepository;
 import hexlet.code.app.repository.TaskRepository;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -18,14 +23,18 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskStatusRepository taskStatusRepository;
     private final UserRepository userRepository;
+    private final LabelRepository labelRepository;
 
     public TaskService(
             TaskRepository taskRepository,
             TaskStatusRepository taskStatusRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository,
+            LabelRepository labelRepository) {
+
         this.taskRepository = taskRepository;
         this.taskStatusRepository = taskStatusRepository;
         this.userRepository = userRepository;
+        this.labelRepository = labelRepository;
     }
 
     public List<TaskResponseDto> getAll() {
@@ -64,6 +73,10 @@ public class TaskService {
                     );
 
             task.setAssignee(assignee);
+        }
+
+        if (dto.getLabels() != null) {
+            task.setLabels(findLabels(dto.getLabels()));
         }
 
         return toDto(taskRepository.save(task));
@@ -105,6 +118,10 @@ public class TaskService {
             task.setAssignee(assignee);
         }
 
+        if (dto.getLabels() != null) {
+            task.setLabels(findLabels(dto.getLabels()));
+        }
+
         return toDto(taskRepository.save(task));
     }
 
@@ -117,12 +134,34 @@ public class TaskService {
         taskRepository.delete(task);
     }
 
+    private Set<Label> findLabels(Set<Long> labelIds) {
+        var labels = new HashSet<Label>();
+
+        for (var labelId : labelIds) {
+            var label = labelRepository.findById(labelId)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Label not found"
+                            )
+                    );
+
+            labels.add(label);
+        }
+
+        return labels;
+    }
+
     private TaskResponseDto toDto(Task task) {
         Long assigneeId = null;
 
         if (task.getAssignee() != null) {
             assigneeId = task.getAssignee().getId();
         }
+
+        var labelIds = task.getLabels()
+                .stream()
+                .map(Label::getId)
+                .collect(Collectors.toSet());
 
         return new TaskResponseDto(
                 task.getId(),
@@ -131,7 +170,8 @@ public class TaskService {
                 assigneeId,
                 task.getName(),
                 task.getDescription(),
-                task.getTaskStatus().getSlug()
+                task.getTaskStatus().getSlug(),
+                labelIds
         );
     }
 }

@@ -29,10 +29,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-class TaskControllerTest {
+class LabelControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private LabelRepository labelRepository;
 
     @Autowired
     private TaskRepository taskRepository;
@@ -44,15 +47,10 @@ class TaskControllerTest {
     private UserRepository userRepository;
 
     @Autowired
-    private LabelRepository labelRepository;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private User user;
     private TaskStatus status;
-    private Label feature;
-    private Label bug;
 
     @BeforeEach
     void setUp() {
@@ -70,14 +68,6 @@ class TaskControllerTest {
         status.setName("Draft");
         status.setSlug("draft");
         status = taskStatusRepository.save(status);
-
-        feature = new Label();
-        feature.setName("feature");
-        feature = labelRepository.save(feature);
-
-        bug = new Label();
-        bug.setName("bug");
-        bug = labelRepository.save(bug);
     }
 
     private String getToken() throws Exception {
@@ -98,111 +88,90 @@ class TaskControllerTest {
     }
 
     @Test
-    void testCreateTask() throws Exception {
+    void testCreateLabel() throws Exception {
         var request = """
                 {
-                  "index": 12,
-                  "assignee_id": %d,
-                  "title": "Test title",
-                  "content": "Test content",
-                  "status": "draft",
-                  "labels": [%d, %d]
+                  "name": "feature"
                 }
-                """.formatted(
-                user.getId(),
-                feature.getId(),
-                bug.getId()
-        );
+                """;
 
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post("/api/labels")
                         .header("Authorization", "Bearer " + getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.index").value(12))
-                .andExpect(jsonPath("$.assignee_id").value(user.getId()))
-                .andExpect(jsonPath("$.title").value("Test title"))
-                .andExpect(jsonPath("$.content").value("Test content"))
-                .andExpect(jsonPath("$.status").value("draft"))
-                .andExpect(jsonPath("$.labels.length()").value(2));
+                .andExpect(jsonPath("$.name").value("feature"));
     }
 
     @Test
-    void testGetTasks() throws Exception {
-        var task = createTask();
+    void testGetLabels() throws Exception {
+        var label = new Label();
+        label.setName("feature");
+        labelRepository.save(label);
 
-        mockMvc.perform(get("/api/tasks")
+        mockMvc.perform(get("/api/labels")
                         .header("Authorization", "Bearer " + getToken()))
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Total-Count", "1"))
-                .andExpect(jsonPath("$[0].id").value(task.getId()))
-                .andExpect(jsonPath("$[0].title").value("Test title"))
-                .andExpect(jsonPath("$[0].status").value("draft"))
-                .andExpect(jsonPath("$[0].labels.length()").value(2));
+                .andExpect(jsonPath("$[0].name").value("feature"));
     }
 
     @Test
-    void testGetTaskById() throws Exception {
-        var task = createTask();
+    void testGetLabelById() throws Exception {
+        var label = new Label();
+        label.setName("feature");
+        label = labelRepository.save(label);
 
-        mockMvc.perform(get("/api/tasks/" + task.getId())
+        mockMvc.perform(get("/api/labels/" + label.getId())
                         .header("Authorization", "Bearer " + getToken()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(task.getId()))
-                .andExpect(jsonPath("$.title").value("Test title"))
-                .andExpect(jsonPath("$.assignee_id").value(user.getId()))
-                .andExpect(jsonPath("$.status").value("draft"))
-                .andExpect(jsonPath("$.labels.length()").value(2));
+                .andExpect(jsonPath("$.name").value("feature"));
     }
 
     @Test
-    void testUpdateTaskPartially() throws Exception {
-        var task = createTask();
+    void testUpdateLabel() throws Exception {
+        var label = new Label();
+        label.setName("feature");
+        label = labelRepository.save(label);
 
         var request = """
                 {
-                  "title": "Updated title",
-                  "content": "Updated content",
-                  "labels": [%d]
+                  "name": "updated"
                 }
-                """.formatted(bug.getId());
+                """;
 
-        mockMvc.perform(put("/api/tasks/" + task.getId())
+        mockMvc.perform(put("/api/labels/" + label.getId())
                         .header("Authorization", "Bearer " + getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Updated title"))
-                .andExpect(jsonPath("$.content").value("Updated content"))
-                .andExpect(jsonPath("$.status").value("draft"))
-                .andExpect(jsonPath("$.assignee_id").value(user.getId()))
-                .andExpect(jsonPath("$.labels.length()").value(1))
-                .andExpect(jsonPath("$.labels[0]").value(bug.getId()));
+                .andExpect(jsonPath("$.name").value("updated"));
     }
 
     @Test
-    void testDeleteTask() throws Exception {
-        var task = createTask();
+    void testDeleteLabel() throws Exception {
+        var label = new Label();
+        label.setName("feature");
+        label = labelRepository.save(label);
 
-        mockMvc.perform(delete("/api/tasks/" + task.getId())
+        mockMvc.perform(delete("/api/labels/" + label.getId())
                         .header("Authorization", "Bearer " + getToken()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/tasks/" + task.getId())
+        mockMvc.perform(get("/api/labels/" + label.getId())
                         .header("Authorization", "Bearer " + getToken()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    void testInvalidTaskReturns400() throws Exception {
+    void testInvalidLabelReturns400() throws Exception {
         var request = """
                 {
-                  "title": "",
-                  "status": ""
+                  "name": "ab"
                 }
                 """;
 
-        mockMvc.perform(post("/api/tasks")
+        mockMvc.perform(post("/api/labels")
                         .header("Authorization", "Bearer " + getToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
@@ -210,48 +179,45 @@ class TaskControllerTest {
     }
 
     @Test
-    void testTasksRequireAuthentication() throws Exception {
-        mockMvc.perform(get("/api/tasks"))
+    void testDuplicateLabelReturns409() throws Exception {
+        var label = new Label();
+        label.setName("feature");
+        labelRepository.save(label);
+
+        var request = """
+                {
+                  "name": "feature"
+                }
+                """;
+
+        mockMvc.perform(post("/api/labels")
+                        .header("Authorization", "Bearer " + getToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void testLabelsRequireAuthentication() throws Exception {
+        mockMvc.perform(get("/api/labels"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void testCannotDeleteAssignedUser() throws Exception {
-        createTask();
-
-        mockMvc.perform(delete("/api/users/" + user.getId())
-                        .header("Authorization", "Bearer " + getToken()))
-                .andExpect(status().isConflict());
-    }
-
-    @Test
-    void testCannotDeleteUsedStatus() throws Exception {
-        createTask();
-
-        mockMvc.perform(delete("/api/task_statuses/" + status.getId())
-                        .header("Authorization", "Bearer " + getToken()))
-                .andExpect(status().isConflict());
-    }
-
-    @Test
     void testCannotDeleteUsedLabel() throws Exception {
-        createTask();
+        var label = new Label();
+        label.setName("feature");
+        label = labelRepository.save(label);
 
-        mockMvc.perform(delete("/api/labels/" + feature.getId())
-                        .header("Authorization", "Bearer " + getToken()))
-                .andExpect(status().isConflict());
-    }
-
-    private Task createTask() {
         var task = new Task();
-
-        task.setName("Test title");
-        task.setIndex(12);
-        task.setDescription("Test content");
+        task.setName("Task");
         task.setTaskStatus(status);
         task.setAssignee(user);
-        task.setLabels(Set.of(feature, bug));
+        task.setLabels(Set.of(label));
+        taskRepository.save(task);
 
-        return taskRepository.save(task);
+        mockMvc.perform(delete("/api/labels/" + label.getId())
+                        .header("Authorization", "Bearer " + getToken()))
+                .andExpect(status().isConflict());
     }
 }

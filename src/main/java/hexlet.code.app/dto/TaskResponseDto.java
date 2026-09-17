@@ -3,6 +3,7 @@ package hexlet.code.app.dto;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 public class TaskResponseDto {
 
@@ -24,6 +25,8 @@ public class TaskResponseDto {
     @JsonProperty("status")
     private String statusSlug;
 
+    private Set<Long> labels;
+
     public TaskResponseDto(
             Long id,
             Integer index,
@@ -31,7 +34,9 @@ public class TaskResponseDto {
             Long assigneeId,
             String name,
             String description,
-            String statusSlug) {
+            String statusSlug,
+            Set<Long> labels) {
+
         this.id = id;
         this.index = index;
         this.createdAt = createdAt;
@@ -39,6 +44,7 @@ public class TaskResponseDto {
         this.name = name;
         this.description = description;
         this.statusSlug = statusSlug;
+        this.labels = labels;
     }
 
     public Long getId() {
@@ -67,5 +73,9 @@ public class TaskResponseDto {
 
     public String getStatusSlug() {
         return statusSlug;
+    }
+
+    public Set<Long> getLabels() {
+        return labels;
     }
 }

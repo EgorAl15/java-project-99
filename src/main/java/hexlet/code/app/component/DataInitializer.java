@@ -1,7 +1,9 @@
 package hexlet.code.app.component;
 
+import hexlet.code.app.Label;
 import hexlet.code.app.TaskStatus;
 import hexlet.code.app.User;
+import hexlet.code.app.repository.LabelRepository;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -13,14 +15,17 @@ public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final TaskStatusRepository taskStatusRepository;
+    private final LabelRepository labelRepository;
     private final PasswordEncoder passwordEncoder;
 
     public DataInitializer(
             UserRepository userRepository,
             TaskStatusRepository taskStatusRepository,
+            LabelRepository labelRepository,
             PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.taskStatusRepository = taskStatusRepository;
+        this.labelRepository = labelRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -33,6 +38,9 @@ public class DataInitializer implements CommandLineRunner {
         createStatusIfNotExists("To Be Fixed", "to_be_fixed");
         createStatusIfNotExists("To Publish", "to_publish");
         createStatusIfNotExists("Published", "published");
+
+        createLabelIfNotExists("feature");
+        createLabelIfNotExists("bug");
     }
 
     private void createAdminIfNotExists() {
@@ -46,7 +54,10 @@ public class DataInitializer implements CommandLineRunner {
         }
     }
 
-    private void createStatusIfNotExists(String name, String slug) {
+    private void createStatusIfNotExists(
+            String name,
+            String slug) {
+
         if (taskStatusRepository.findBySlug(slug).isEmpty()) {
             var status = new TaskStatus();
 
@@ -54,6 +65,15 @@ public class DataInitializer implements CommandLineRunner {
             status.setSlug(slug);
 
             taskStatusRepository.save(status);
+        }
+    }
+
+    private void createLabelIfNotExists(String name) {
+        if (labelRepository.findByName(name).isEmpty()) {
+            var label = new Label();
+            label.setName(name);
+
+            labelRepository.save(label);
         }
     }
 }
