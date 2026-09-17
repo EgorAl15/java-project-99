@@ -4,7 +4,9 @@ import hexlet.code.app.TaskStatus;
 import hexlet.code.app.dto.TaskStatusCreateDto;
 import hexlet.code.app.dto.TaskStatusResponseDto;
 import hexlet.code.app.dto.TaskStatusUpdateDto;
+import hexlet.code.app.exception.ResourceConflictException;
 import hexlet.code.app.exception.ResourceNotFoundException;
+import hexlet.code.app.repository.TaskRepository;
 import hexlet.code.app.repository.TaskStatusRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,9 +16,13 @@ import java.util.List;
 public class TaskStatusService {
 
     private final TaskStatusRepository repository;
+    private final TaskRepository taskRepository;
 
-    public TaskStatusService(TaskStatusRepository repository) {
+    public TaskStatusService(
+            TaskStatusRepository repository,
+            TaskRepository taskRepository) {
         this.repository = repository;
+        this.taskRepository = taskRepository;
     }
 
     public List<TaskStatusResponseDto> getAll() {
@@ -45,13 +51,17 @@ public class TaskStatusService {
         }
 
         var status = new TaskStatus();
+
         status.setName(dto.getName());
         status.setSlug(dto.getSlug());
 
         return toDto(repository.save(status));
     }
 
-    public TaskStatusResponseDto update(Long id, TaskStatusUpdateDto dto) {
+    public TaskStatusResponseDto update(
+            Long id,
+            TaskStatusUpdateDto dto) {
+
         var status = repository.findById(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Task status not found")
@@ -73,6 +83,12 @@ public class TaskStatusService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Task status not found")
                 );
+
+        if (taskRepository.existsByTaskStatus(status)) {
+            throw new ResourceConflictException(
+                    "Cannot delete task status used by tasks"
+            );
+        }
 
         repository.delete(status);
     }

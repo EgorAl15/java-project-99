@@ -4,7 +4,9 @@ import hexlet.code.app.User;
 import hexlet.code.app.dto.UserCreateDto;
 import hexlet.code.app.dto.UserResponseDto;
 import hexlet.code.app.dto.UserUpdateDto;
+import hexlet.code.app.exception.ResourceConflictException;
 import hexlet.code.app.exception.ResourceNotFoundException;
+import hexlet.code.app.repository.TaskRepository;
 import hexlet.code.app.repository.UserRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,12 +20,15 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TaskRepository taskRepository;
 
     public UserService(
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            TaskRepository taskRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.taskRepository = taskRepository;
     }
 
     public List<UserResponseDto> getAll() {
@@ -87,6 +92,12 @@ public class UserService {
                 );
 
         checkOwner(user);
+
+        if (taskRepository.existsByAssignee(user)) {
+            throw new ResourceConflictException(
+                    "Cannot delete user assigned to tasks"
+            );
+        }
 
         userRepository.delete(user);
     }

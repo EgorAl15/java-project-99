@@ -1,6 +1,7 @@
 package hexlet.code.app.controller;
 
 import hexlet.code.app.User;
+import hexlet.code.app.repository.TaskRepository;
 import hexlet.code.app.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,10 +30,14 @@ class UserControllerTest {
     private UserRepository userRepository;
 
     @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
+        taskRepository.deleteAll();
         userRepository.deleteAll();
 
         var admin = new User();
@@ -42,13 +47,16 @@ class UserControllerTest {
         userRepository.save(admin);
     }
 
-    private String getToken(String email, String password) throws Exception {
+    private String getToken(
+            String username,
+            String password) throws Exception {
+
         var request = """
                 {
                   "username": "%s",
                   "password": "%s"
                 }
-                """.formatted(email, password);
+                """.formatted(username, password);
 
         var result = mockMvc.perform(post("/api/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -60,13 +68,26 @@ class UserControllerTest {
     }
 
     private String getAdminToken() throws Exception {
-        return getToken("hexlet@example.com", "qwerty");
+        return getToken(
+                "hexlet@example.com",
+                "qwerty"
+        );
+    }
+
+    private User createUser(
+            String email,
+            String password) {
+
+        var user = new User();
+
+        user.setEmail(email);
+        user.setPassword(passwordEncoder.encode(password));
+
+        return userRepository.save(user);
     }
 
     @Test
     void testCreateUser() throws Exception {
-        var token = getAdminToken();
-
         var request = """
                 {
                   "email": "john@example.com",
@@ -77,64 +98,98 @@ class UserControllerTest {
                 """;
 
         mockMvc.perform(post("/api/users")
-                        .header("Authorization", "Bearer " + token)
+                        .header(
+                                "Authorization",
+                                "Bearer " + getAdminToken()
+                        )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email").value("john@example.com"))
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Doe"))
-                .andExpect(jsonPath("$.password").doesNotExist());
+                .andExpect(
+                        jsonPath("$.email")
+                                .value("john@example.com")
+                )
+                .andExpect(
+                        jsonPath("$.firstName")
+                                .value("John")
+                )
+                .andExpect(
+                        jsonPath("$.lastName")
+                                .value("Doe")
+                )
+                .andExpect(
+                        jsonPath("$.password")
+                                .doesNotExist()
+                );
     }
 
     @Test
     void testGetUsers() throws Exception {
-        var token = getAdminToken();
+        var user = createUser(
+                "john@example.com",
+                "secret"
+        );
 
-        var user = new User();
-        user.setEmail("john@example.com");
-        user.setPassword(passwordEncoder.encode("secret"));
         user.setFirstName("John");
         user.setLastName("Doe");
 
         userRepository.save(user);
 
         mockMvc.perform(get("/api/users")
-                        .header("Authorization", "Bearer " + token))
+                        .header(
+                                "Authorization",
+                                "Bearer " + getAdminToken()
+                        ))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].email")
-                        .value(org.hamcrest.Matchers.hasItem("john@example.com")))
-                .andExpect(jsonPath("$[0].password").doesNotExist());
+                .andExpect(
+                        jsonPath("$[1].email")
+                                .value("john@example.com")
+                )
+                .andExpect(
+                        jsonPath("$[1].password")
+                                .doesNotExist()
+                );
     }
 
     @Test
     void testGetUserById() throws Exception {
-        var token = getAdminToken();
-
-        var user = new User();
-        user.setEmail("john@example.com");
-        user.setPassword(passwordEncoder.encode("secret"));
-
-        user = userRepository.save(user);
+        var user = createUser(
+                "john@example.com",
+                "secret"
+        );
 
         mockMvc.perform(get("/api/users/" + user.getId())
-                        .header("Authorization", "Bearer " + token))
+                        .header(
+                                "Authorization",
+                                "Bearer " + getAdminToken()
+                        ))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("john@example.com"))
-                .andExpect(jsonPath("$.password").doesNotExist());
+                .andExpect(
+                        jsonPath("$.email")
+                                .value("john@example.com")
+                )
+                .andExpect(
+                        jsonPath("$.password")
+                                .doesNotExist()
+                );
     }
 
     @Test
     void testUpdateUserPartially() throws Exception {
-        var user = new User();
-        user.setEmail("john@example.com");
-        user.setPassword(passwordEncoder.encode("secret"));
+        var user = createUser(
+                "john@example.com",
+                "secret"
+        );
+
         user.setFirstName("John");
         user.setLastName("Doe");
 
-        user = userRepository.save(user);
+        userRepository.save(user);
 
-        var token = getToken("john@example.com", "secret");
+        var token = getToken(
+                "john@example.com",
+                "secret"
+        );
 
         var request = """
                 {
@@ -143,40 +198,56 @@ class UserControllerTest {
                 """;
 
         mockMvc.perform(put("/api/users/" + user.getId())
-                        .header("Authorization", "Bearer " + token)
+                        .header(
+                                "Authorization",
+                                "Bearer " + token
+                        )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.email").value("new@example.com"))
-                .andExpect(jsonPath("$.firstName").value("John"))
-                .andExpect(jsonPath("$.lastName").value("Doe"));
+                .andExpect(
+                        jsonPath("$.email")
+                                .value("new@example.com")
+                )
+                .andExpect(
+                        jsonPath("$.firstName")
+                                .value("John")
+                )
+                .andExpect(
+                        jsonPath("$.lastName")
+                                .value("Doe")
+                );
     }
 
     @Test
     void testDeleteUser() throws Exception {
-        var user = new User();
-        user.setEmail("john@example.com");
-        user.setPassword(passwordEncoder.encode("secret"));
+        var user = createUser(
+                "john@example.com",
+                "secret"
+        );
 
-        user = userRepository.save(user);
-
-        var token = getToken("john@example.com", "secret");
+        var token = getToken(
+                "john@example.com",
+                "secret"
+        );
 
         mockMvc.perform(delete("/api/users/" + user.getId())
-                        .header("Authorization", "Bearer " + token))
+                        .header(
+                                "Authorization",
+                                "Bearer " + token
+                        ))
                 .andExpect(status().isNoContent());
 
-        var adminToken = getAdminToken();
-
         mockMvc.perform(get("/api/users/" + user.getId())
-                        .header("Authorization", "Bearer " + adminToken))
+                        .header(
+                                "Authorization",
+                                "Bearer " + getAdminToken()
+                        ))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void testInvalidUserReturns400() throws Exception {
-        var token = getAdminToken();
-
         var request = """
                 {
                   "email": "bad-email",
@@ -185,7 +256,10 @@ class UserControllerTest {
                 """;
 
         mockMvc.perform(post("/api/users")
-                        .header("Authorization", "Bearer " + token)
+                        .header(
+                                "Authorization",
+                                "Bearer " + getAdminToken()
+                        )
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isBadRequest());
@@ -193,10 +267,11 @@ class UserControllerTest {
 
     @Test
     void testUserNotFound() throws Exception {
-        var token = getAdminToken();
-
         mockMvc.perform(get("/api/users/999999")
-                        .header("Authorization", "Bearer " + token))
+                        .header(
+                                "Authorization",
+                                "Bearer " + getAdminToken()
+                        ))
                 .andExpect(status().isNotFound());
     }
 
@@ -204,6 +279,44 @@ class UserControllerTest {
     void testUsersRequireAuthentication() throws Exception {
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testCannotUpdateAnotherUser() throws Exception {
+        var otherUser = createUser(
+                "other@example.com",
+                "secret"
+        );
+
+        var request = """
+                {
+                  "firstName": "Changed"
+                }
+                """;
+
+        mockMvc.perform(put("/api/users/" + otherUser.getId())
+                        .header(
+                                "Authorization",
+                                "Bearer " + getAdminToken()
+                        )
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void testCannotDeleteAnotherUser() throws Exception {
+        var otherUser = createUser(
+                "other@example.com",
+                "secret"
+        );
+
+        mockMvc.perform(delete("/api/users/" + otherUser.getId())
+                        .header(
+                                "Authorization",
+                                "Bearer " + getAdminToken()
+                        ))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -234,43 +347,5 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(request))
                 .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void testCannotUpdateAnotherUser() throws Exception {
-        var token = getAdminToken();
-
-        var user = new User();
-        user.setEmail("john@example.com");
-        user.setPassword(passwordEncoder.encode("secret"));
-
-        user = userRepository.save(user);
-
-        var request = """
-                {
-                  "firstName": "Changed"
-                }
-                """;
-
-        mockMvc.perform(put("/api/users/" + user.getId())
-                        .header("Authorization", "Bearer " + token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(request))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void testCannotDeleteAnotherUser() throws Exception {
-        var token = getAdminToken();
-
-        var user = new User();
-        user.setEmail("john@example.com");
-        user.setPassword(passwordEncoder.encode("secret"));
-
-        user = userRepository.save(user);
-
-        mockMvc.perform(delete("/api/users/" + user.getId())
-                        .header("Authorization", "Bearer " + token))
-                .andExpect(status().isForbidden());
     }
 }

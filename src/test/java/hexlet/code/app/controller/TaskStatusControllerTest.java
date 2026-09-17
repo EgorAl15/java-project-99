@@ -2,6 +2,7 @@ package hexlet.code.app.controller;
 
 import hexlet.code.app.TaskStatus;
 import hexlet.code.app.User;
+import hexlet.code.app.repository.TaskRepository;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +14,8 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,16 +38,21 @@ class TaskStatusControllerTest {
     private UserRepository userRepository;
 
     @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
+        taskRepository.deleteAll();
         taskStatusRepository.deleteAll();
         userRepository.deleteAll();
 
         var admin = new User();
         admin.setEmail("hexlet@example.com");
         admin.setPassword(passwordEncoder.encode("qwerty"));
+
         userRepository.save(admin);
     }
 
@@ -67,10 +75,11 @@ class TaskStatusControllerTest {
 
     @Test
     void testGetStatuses() throws Exception {
-        var status = new TaskStatus();
-        status.setName("Draft");
-        status.setSlug("draft");
-        taskStatusRepository.save(status);
+        var taskStatus = new TaskStatus();
+        taskStatus.setName("Draft");
+        taskStatus.setSlug("draft");
+
+        taskStatusRepository.save(taskStatus);
 
         mockMvc.perform(get("/api/task_statuses")
                         .header("Authorization", "Bearer " + getToken()))
@@ -85,11 +94,13 @@ class TaskStatusControllerTest {
         var taskStatus = new TaskStatus();
         taskStatus.setName("Draft");
         taskStatus.setSlug("draft");
+
         taskStatus = taskStatusRepository.save(taskStatus);
 
         mockMvc.perform(get("/api/task_statuses/" + taskStatus.getId())
                         .header("Authorization", "Bearer " + getToken()))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(taskStatus.getId()))
                 .andExpect(jsonPath("$.name").value("Draft"))
                 .andExpect(jsonPath("$.slug").value("draft"));
     }
@@ -117,6 +128,7 @@ class TaskStatusControllerTest {
         var taskStatus = new TaskStatus();
         taskStatus.setName("Old Status");
         taskStatus.setSlug("old_status");
+
         taskStatus = taskStatusRepository.save(taskStatus);
 
         var request = """
@@ -139,6 +151,7 @@ class TaskStatusControllerTest {
         var taskStatus = new TaskStatus();
         taskStatus.setName("Temporary");
         taskStatus.setSlug("temporary");
+
         taskStatus = taskStatusRepository.save(taskStatus);
 
         mockMvc.perform(delete("/api/task_statuses/" + taskStatus.getId())
@@ -177,11 +190,12 @@ class TaskStatusControllerTest {
         var taskStatus = new TaskStatus();
         taskStatus.setName("Draft");
         taskStatus.setSlug("draft");
+
         taskStatusRepository.save(taskStatus);
 
         var result = taskStatusRepository.findBySlug("draft");
 
-        assert result.isPresent();
-        assert result.get().getName().equals("Draft");
+        assertTrue(result.isPresent());
+        assertEquals("Draft", result.get().getName());
     }
 }
