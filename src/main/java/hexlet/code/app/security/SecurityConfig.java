@@ -77,7 +77,6 @@ public class SecurityConfig {
                                 "/api/login",
                                 "/h2-console/**",
                                 "/error",
-
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**"
