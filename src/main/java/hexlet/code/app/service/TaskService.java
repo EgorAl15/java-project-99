@@ -46,8 +46,7 @@ public class TaskService {
             Long labelId) {
 
         Specification<Task> specification =
-                Specification
-                        .where(TaskSpecification.titleContains(titleCont))
+                TaskSpecification.titleContains(titleCont)
                         .and(TaskSpecification.hasAssignee(assigneeId))
                         .and(TaskSpecification.hasStatus(status))
                         .and(TaskSpecification.hasLabel(labelId));

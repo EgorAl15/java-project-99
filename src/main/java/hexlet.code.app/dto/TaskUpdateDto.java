@@ -1,11 +1,13 @@
 package hexlet.code.app.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.Size;
 
 import java.util.Set;
 
 public class TaskUpdateDto {
 
+    @Size(min = 1)
     @JsonProperty("title")
     private String name;
 
@@ -14,6 +16,7 @@ public class TaskUpdateDto {
     @JsonProperty("content")
     private String description;
 
+    @Size(min = 1)
     @JsonProperty("status")
     private String statusSlug;
 
