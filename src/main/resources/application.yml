@@ -17,6 +17,7 @@ jwt:
   secret: ${JWT_SECRET:development-secret-key-development-secret-key}
 
 sentry:
+  enabled: ${SENTRY_ENABLED:false}
   dsn: ${SENTRY_DSN:}
   environment: ${SENTRY_ENVIRONMENT:development}
   traces-sample-rate: 0.0
