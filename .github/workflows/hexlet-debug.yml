@@ -12,6 +12,19 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Prepare Hexlet build context
+        run: |
+          mkdir -p /var/tmp/source
+
+          docker pull hexletprojects/java_task_manager_project_ru:latest
+
+          docker run --rm \
+            -v /var/tmp:/mnt \
+            hexletprojects/java_task_manager_project_ru:latest \
+            sh -c "cp /package.json /package-lock.json /mnt/source/"
+
+          ls -la /var/tmp/source
+
       - name: Hexlet project check verbose
         uses: hexlet/project-action@release
         with:
