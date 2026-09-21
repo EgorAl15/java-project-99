@@ -1,0 +1,20 @@
+name: hexlet-debug
+
+on:
+  push:
+    branches:
+      - debug-hexlet-verbose
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Hexlet project check verbose
+        uses: hexlet/project-action@release
+        with:
+          hexlet-id: ${{ secrets.HEXLET_ID }}
+          verbose: true
+          mount-path: /var/tmp
