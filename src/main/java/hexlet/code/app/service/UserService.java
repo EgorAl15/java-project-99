@@ -48,6 +48,10 @@ public class UserService {
     }
 
     public UserResponseDto create(UserCreateDto dto) {
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new ResourceConflictException("Email already exists");
+        }
+
         var user = new User();
 
         user.setFirstName(dto.getFirstName());
@@ -72,6 +76,12 @@ public class UserService {
 
         if (dto.getLastName() != null) {
             user.setLastName(dto.getLastName());
+        }
+
+        if (dto.getEmail() != null
+                && !dto.getEmail().equals(user.getEmail())
+                && userRepository.existsByEmail(dto.getEmail())) {
+            throw new ResourceConflictException("Email already exists");
         }
 
         if (dto.getEmail() != null) {
