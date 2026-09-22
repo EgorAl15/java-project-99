@@ -43,11 +43,11 @@ public class TaskStatusService {
 
     public TaskStatusResponseDto create(TaskStatusCreateDto dto) {
         if (repository.existsByName(dto.getName())) {
-            throw new IllegalArgumentException("Name already exists");
+            throw new ResourceConflictException("Name already exists");
         }
 
         if (repository.existsBySlug(dto.getSlug())) {
-            throw new IllegalArgumentException("Slug already exists");
+            throw new ResourceConflictException("Slug already exists");
         }
 
         var status = new TaskStatus();
@@ -66,6 +66,18 @@ public class TaskStatusService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Task status not found")
                 );
+
+        if (dto.getName() != null
+                && !dto.getName().equals(status.getName())
+                && repository.existsByName(dto.getName())) {
+            throw new ResourceConflictException("Name already exists");
+        }
+
+        if (dto.getSlug() != null
+                && !dto.getSlug().equals(status.getSlug())
+                && repository.existsBySlug(dto.getSlug())) {
+            throw new ResourceConflictException("Slug already exists");
+        }
 
         if (dto.getName() != null) {
             status.setName(dto.getName());
