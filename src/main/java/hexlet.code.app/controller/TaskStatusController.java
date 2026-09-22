@@ -50,7 +50,7 @@ public class TaskStatusController {
     @PutMapping("/{id}")
     public TaskStatusResponseDto update(
             @PathVariable Long id,
-            @RequestBody TaskStatusUpdateDto dto) {
+            @Valid @RequestBody TaskStatusUpdateDto dto) {
         return service.update(id, dto);
     }
 
