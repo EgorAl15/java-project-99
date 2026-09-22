@@ -1,9 +1,13 @@
 package hexlet.code.app.dto;
 
+import jakarta.validation.constraints.Size;
+
 public class TaskStatusUpdateDto {
 
+    @Size(min = 1)
     private String name;
 
+    @Size(min = 1)
     private String slug;
 
     public String getName() {
