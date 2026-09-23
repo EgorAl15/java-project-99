@@ -23,6 +23,7 @@ public class DataInitializer implements CommandLineRunner {
             TaskStatusRepository taskStatusRepository,
             LabelRepository labelRepository,
             PasswordEncoder passwordEncoder) {
+
         this.userRepository = userRepository;
         this.taskStatusRepository = taskStatusRepository;
         this.labelRepository = labelRepository;
@@ -34,9 +35,9 @@ public class DataInitializer implements CommandLineRunner {
         createAdminIfNotExists();
 
         createStatusIfNotExists("Draft", "draft");
-        createStatusIfNotExists("ToReview", "to_review");
-        createStatusIfNotExists("ToBeFixed", "to_be_fixed");
-        createStatusIfNotExists("ToPublish", "to_publish");
+        createStatusIfNotExists("To Review", "to_review");
+        createStatusIfNotExists("To Be Fixed", "to_be_fixed");
+        createStatusIfNotExists("To Publish", "to_publish");
         createStatusIfNotExists("Published", "published");
 
         createLabelIfNotExists("feature");
@@ -71,6 +72,7 @@ public class DataInitializer implements CommandLineRunner {
     private void createLabelIfNotExists(String name) {
         if (labelRepository.findByName(name).isEmpty()) {
             var label = new Label();
+
             label.setName(name);
 
             labelRepository.save(label);
