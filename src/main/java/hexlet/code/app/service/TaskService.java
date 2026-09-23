@@ -88,8 +88,8 @@ public class TaskService {
             task.setAssignee(assignee);
         }
 
-        if (dto.getLabels() != null) {
-            task.setLabels(findLabels(dto.getLabels()));
+        if (dto.getTaskLabelIds() != null) {
+            task.setLabels(findLabels(dto.getTaskLabelIds()));
         }
 
         return toDto(taskRepository.save(task));
@@ -131,8 +131,8 @@ public class TaskService {
             task.setAssignee(assignee);
         }
 
-        if (dto.getLabels() != null) {
-            task.setLabels(findLabels(dto.getLabels()));
+        if (dto.getTaskLabelIds() != null) {
+            task.setLabels(findLabels(dto.getTaskLabelIds()));
         }
 
         return toDto(taskRepository.save(task));
