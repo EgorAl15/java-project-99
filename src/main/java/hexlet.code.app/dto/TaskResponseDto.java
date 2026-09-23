@@ -25,7 +25,7 @@ public class TaskResponseDto {
     @JsonProperty("status")
     private String statusSlug;
 
-    private Set<Long> labels;
+    private Set<Long> taskLabelIds;
 
     public TaskResponseDto(
             Long id,
@@ -35,7 +35,7 @@ public class TaskResponseDto {
             String name,
             String description,
             String statusSlug,
-            Set<Long> labels) {
+            Set<Long> taskLabelIds) {
 
         this.id = id;
         this.index = index;
@@ -44,7 +44,7 @@ public class TaskResponseDto {
         this.name = name;
         this.description = description;
         this.statusSlug = statusSlug;
-        this.labels = labels;
+        this.taskLabelIds = taskLabelIds;
     }
 
     public Long getId() {
@@ -75,7 +75,7 @@ public class TaskResponseDto {
         return statusSlug;
     }
 
-    public Set<Long> getLabels() {
-        return labels;
+    public Set<Long> getTaskLabelIds() {
+        return taskLabelIds;
     }
 }
