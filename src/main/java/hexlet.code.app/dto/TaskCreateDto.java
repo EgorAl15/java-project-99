@@ -23,7 +23,7 @@ public class TaskCreateDto {
     @JsonProperty("assignee_id")
     private Long assigneeId;
 
-    private Set<Long> labels;
+    private Set<Long> taskLabelIds;
 
     public String getName() {
         return name;
@@ -45,8 +45,8 @@ public class TaskCreateDto {
         return assigneeId;
     }
 
-    public Set<Long> getLabels() {
-        return labels;
+    public Set<Long> getTaskLabelIds() {
+        return taskLabelIds;
     }
 
     public void setName(String name) {
@@ -69,7 +69,7 @@ public class TaskCreateDto {
         this.assigneeId = assigneeId;
     }
 
-    public void setLabels(Set<Long> labels) {
-        this.labels = labels;
+    public void setTaskLabelIds(Set<Long> taskLabelIds) {
+        this.taskLabelIds = taskLabelIds;
     }
 }
