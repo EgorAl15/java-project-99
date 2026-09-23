@@ -34,9 +34,9 @@ public class DataInitializer implements CommandLineRunner {
         createAdminIfNotExists();
 
         createStatusIfNotExists("Draft", "draft");
-        createStatusIfNotExists("To Review", "to_review");
-        createStatusIfNotExists("To Be Fixed", "to_be_fixed");
-        createStatusIfNotExists("To Publish", "to_publish");
+        createStatusIfNotExists("ToReview", "to_review");
+        createStatusIfNotExists("ToBeFixed", "to_be_fixed");
+        createStatusIfNotExists("ToPublish", "to_publish");
         createStatusIfNotExists("Published", "published");
 
         createLabelIfNotExists("feature");
