@@ -6,91 +6,72 @@ import hexlet.code.app.dto.TaskStatusUpdateDto;
 import hexlet.code.app.exception.ResourceNotFoundException;
 import hexlet.code.app.model.TaskStatus;
 import hexlet.code.app.repository.TaskStatusRepository;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import org.springframework.stereotype.Service;
 
 @Service
 public class TaskStatusService {
 
-    private final TaskStatusRepository repository;
+  private final TaskStatusRepository repository;
 
-    public TaskStatusService(
-            TaskStatusRepository repository) {
+  public TaskStatusService(TaskStatusRepository repository) {
 
-        this.repository = repository;
+    this.repository = repository;
+  }
+
+  public List<TaskStatusResponseDto> getAll() {
+    return repository.findAll().stream().map(this::toDto).toList();
+  }
+
+  public TaskStatusResponseDto getById(Long id) {
+    var status =
+        repository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Task status not found"));
+
+    return toDto(status);
+  }
+
+  public TaskStatusResponseDto create(TaskStatusCreateDto dto) {
+
+    var status = new TaskStatus();
+
+    status.setName(dto.getName());
+    status.setSlug(dto.getSlug());
+
+    return toDto(repository.save(status));
+  }
+
+  public TaskStatusResponseDto update(Long id, TaskStatusUpdateDto dto) {
+
+    var status =
+        repository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Task status not found"));
+
+    if (dto.getName() != null) {
+      status.setName(dto.getName());
     }
 
-    public List<TaskStatusResponseDto> getAll() {
-        return repository.findAll()
-                .stream()
-                .map(this::toDto)
-                .toList();
+    if (dto.getSlug() != null) {
+      status.setSlug(dto.getSlug());
     }
 
-    public TaskStatusResponseDto getById(Long id) {
-        var status = repository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Task status not found"
-                        )
-                );
+    return toDto(repository.save(status));
+  }
 
-        return toDto(status);
-    }
+  public void delete(Long id) {
+    var status =
+        repository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Task status not found"));
 
-    public TaskStatusResponseDto create(
-            TaskStatusCreateDto dto) {
+    repository.delete(status);
+  }
 
-        var status = new TaskStatus();
+  private TaskStatusResponseDto toDto(TaskStatus status) {
 
-        status.setName(dto.getName());
-        status.setSlug(dto.getSlug());
-
-        return toDto(repository.save(status));
-    }
-
-    public TaskStatusResponseDto update(
-            Long id,
-            TaskStatusUpdateDto dto) {
-
-        var status = repository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Task status not found"
-                        )
-                );
-
-        if (dto.getName() != null) {
-            status.setName(dto.getName());
-        }
-
-        if (dto.getSlug() != null) {
-            status.setSlug(dto.getSlug());
-        }
-
-        return toDto(repository.save(status));
-    }
-
-    public void delete(Long id) {
-        var status = repository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Task status not found"
-                        )
-                );
-
-        repository.delete(status);
-    }
-
-    private TaskStatusResponseDto toDto(
-            TaskStatus status) {
-
-        return new TaskStatusResponseDto(
-                status.getId(),
-                status.getName(),
-                status.getSlug(),
-                status.getCreatedAt()
-        );
-    }
+    return new TaskStatusResponseDto(
+        status.getId(), status.getName(), status.getSlug(), status.getCreatedAt());
+  }
 }

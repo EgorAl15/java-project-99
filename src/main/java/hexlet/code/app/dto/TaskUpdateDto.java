@@ -2,74 +2,73 @@ package hexlet.code.app.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.Size;
-
 import java.util.Set;
 
 public class TaskUpdateDto {
 
-    @Size(min = 1)
-    @JsonProperty("title")
-    private String name;
+  @Size(min = 1)
+  @JsonProperty("title")
+  private String name;
 
-    private Integer index;
+  private Integer index;
 
-    @JsonProperty("content")
-    private String description;
+  @JsonProperty("content")
+  private String description;
 
-    @Size(min = 1)
-    @JsonProperty("status")
-    private String statusSlug;
+  @Size(min = 1)
+  @JsonProperty("status")
+  private String statusSlug;
 
-    @JsonProperty("assignee_id")
-    private Long assigneeId;
+  @JsonProperty("assignee_id")
+  private Long assigneeId;
 
-    private Set<Long> labels;
+  private Set<Long> labels;
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public Integer getIndex() {
-        return index;
-    }
+  public Integer getIndex() {
+    return index;
+  }
 
-    public String getDescription() {
-        return description;
-    }
+  public String getDescription() {
+    return description;
+  }
 
-    public String getStatusSlug() {
-        return statusSlug;
-    }
+  public String getStatusSlug() {
+    return statusSlug;
+  }
 
-    public Long getAssigneeId() {
-        return assigneeId;
-    }
+  public Long getAssigneeId() {
+    return assigneeId;
+  }
 
-    public Set<Long> getLabels() {
-        return labels;
-    }
+  public Set<Long> getLabels() {
+    return labels;
+  }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+  public void setName(String name) {
+    this.name = name;
+  }
 
-    public void setIndex(Integer index) {
-        this.index = index;
-    }
+  public void setIndex(Integer index) {
+    this.index = index;
+  }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+  public void setDescription(String description) {
+    this.description = description;
+  }
 
-    public void setStatusSlug(String statusSlug) {
-        this.statusSlug = statusSlug;
-    }
+  public void setStatusSlug(String statusSlug) {
+    this.statusSlug = statusSlug;
+  }
 
-    public void setAssigneeId(Long assigneeId) {
-        this.assigneeId = assigneeId;
-    }
+  public void setAssigneeId(Long assigneeId) {
+    this.assigneeId = assigneeId;
+  }
 
-    public void setLabels(Set<Long> labels) {
-        this.labels = labels;
-    }
+  public void setLabels(Set<Long> labels) {
+    this.labels = labels;
+  }
 }

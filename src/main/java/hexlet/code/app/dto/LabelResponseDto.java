@@ -4,29 +4,26 @@ import java.time.LocalDateTime;
 
 public class LabelResponseDto {
 
-    private Long id;
-    private String name;
-    private LocalDateTime createdAt;
+  private Long id;
+  private String name;
+  private LocalDateTime createdAt;
 
-    public LabelResponseDto(
-            Long id,
-            String name,
-            LocalDateTime createdAt) {
-        this.id = id;
+  public LabelResponseDto(Long id, String name, LocalDateTime createdAt) {
+    this.id = id;
 
-        this.name = name;
-        this.createdAt = createdAt;
-    }
+    this.name = name;
+    this.createdAt = createdAt;
+  }
 
-    public Long getId() {
-        return id;
-    }
+  public Long getId() {
+    return id;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
 }

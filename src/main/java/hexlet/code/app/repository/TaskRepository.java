@@ -1,19 +1,15 @@
 package hexlet.code.app.repository;
 
-import hexlet.code.app.model.Label;
 import hexlet.code.app.model.Task;
-import hexlet.code.app.model.TaskStatus;
-import hexlet.code.app.model.User;
+import java.util.List;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-public interface TaskRepository extends
-        JpaRepository<Task, Long>,
-        JpaSpecificationExecutor<Task> {
+public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
 
-    boolean existsByAssignee(User assignee);
-
-    boolean existsByTaskStatus(TaskStatus taskStatus);
-
-    boolean existsByLabelsContaining(Label label);
+  @Override
+  @EntityGraph(attributePaths = {"taskStatus", "assignee", "labels"})
+  List<Task> findAll(Specification<Task> specification);
 }

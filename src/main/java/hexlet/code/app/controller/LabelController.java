@@ -5,6 +5,7 @@ import hexlet.code.app.dto.LabelResponseDto;
 import hexlet.code.app.dto.LabelUpdateDto;
 import hexlet.code.app.service.LabelService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,58 +19,47 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/labels")
 public class LabelController {
 
-    private final LabelService labelService;
+  private final LabelService labelService;
 
-    public LabelController(LabelService labelService) {
-        this.labelService = labelService;
-    }
+  public LabelController(LabelService labelService) {
+    this.labelService = labelService;
+  }
 
-    @GetMapping
-    public ResponseEntity<List<LabelResponseDto>> index() {
-        var labels = labelService.getAll();
+  @GetMapping
+  public ResponseEntity<List<LabelResponseDto>> index() {
+    var labels = labelService.getAll();
 
-        var headers = new HttpHeaders();
-        headers.add(
-                "X-Total-Count",
-                String.valueOf(labels.size())
-        );
+    var headers = new HttpHeaders();
+    headers.add("X-Total-Count", String.valueOf(labels.size()));
 
-        return ResponseEntity
-                .ok()
-                .headers(headers)
-                .body(labels);
-    }
+    return ResponseEntity.ok().headers(headers).body(labels);
+  }
 
-    @GetMapping("/{id}")
-    public LabelResponseDto show(@PathVariable Long id) {
-        return labelService.getById(id);
-    }
+  @GetMapping("/{id}")
+  public LabelResponseDto show(@PathVariable Long id) {
+    return labelService.getById(id);
+  }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public LabelResponseDto create(
-            @Valid @RequestBody LabelCreateDto dto) {
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public LabelResponseDto create(@Valid @RequestBody LabelCreateDto dto) {
 
-        return labelService.create(dto);
-    }
+    return labelService.create(dto);
+  }
 
-    @PutMapping("/{id}")
-    public LabelResponseDto update(
-            @PathVariable Long id,
-            @Valid @RequestBody LabelUpdateDto dto) {
+  @PutMapping("/{id}")
+  public LabelResponseDto update(@PathVariable Long id, @Valid @RequestBody LabelUpdateDto dto) {
 
-        return labelService.update(id, dto);
-    }
+    return labelService.update(id, dto);
+  }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        labelService.delete(id);
-    }
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable Long id) {
+    labelService.delete(id);
+  }
 }

@@ -1,6 +1,7 @@
 # Менеджер задач (Java)
 
 [![hexlet-check](https://github.com/EgorAl15/java-project-99/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/EgorAl15/java-project-99/actions)
+[![Java CI](https://github.com/EgorAl15/java-project-99/actions/workflows/build.yml/badge.svg)](https://github.com/EgorAl15/java-project-99/actions/workflows/build.yml)
 
 **Менеджер задач** — веб-приложение для создания и управления задачами.
 Проект выполнен в рамках обучения на Хекслете и позволяет на практике познакомиться с разработкой полноценного веб-приложения на Java.

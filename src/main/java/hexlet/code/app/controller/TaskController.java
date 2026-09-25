@@ -5,6 +5,7 @@ import hexlet.code.app.dto.TaskResponseDto;
 import hexlet.code.app.dto.TaskUpdateDto;
 import hexlet.code.app.service.TaskService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,68 +20,52 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/tasks")
 public class TaskController {
 
-    private final TaskService taskService;
+  private final TaskService taskService;
 
-    public TaskController(TaskService taskService) {
-        this.taskService = taskService;
-    }
+  public TaskController(TaskService taskService) {
+    this.taskService = taskService;
+  }
 
-    @GetMapping
-    public ResponseEntity<List<TaskResponseDto>> index(
-            @RequestParam(required = false) String titleCont,
-            @RequestParam(required = false) Long assigneeId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long labelId) {
+  @GetMapping
+  public ResponseEntity<List<TaskResponseDto>> index(
+      @RequestParam(required = false) String titleCont,
+      @RequestParam(required = false) Long assigneeId,
+      @RequestParam(required = false) String status,
+      @RequestParam(required = false) Long labelId) {
 
-        var tasks = taskService.getAll(
-                titleCont,
-                assigneeId,
-                status,
-                labelId
-        );
+    var tasks = taskService.getAll(titleCont, assigneeId, status, labelId);
 
-        var headers = new HttpHeaders();
-        headers.add(
-                "X-Total-Count",
-                String.valueOf(tasks.size())
-        );
+    var headers = new HttpHeaders();
+    headers.add("X-Total-Count", String.valueOf(tasks.size()));
 
-        return ResponseEntity
-                .ok()
-                .headers(headers)
-                .body(tasks);
-    }
+    return ResponseEntity.ok().headers(headers).body(tasks);
+  }
 
-    @GetMapping("/{id}")
-    public TaskResponseDto show(@PathVariable Long id) {
-        return taskService.getById(id);
-    }
+  @GetMapping("/{id}")
+  public TaskResponseDto show(@PathVariable Long id) {
+    return taskService.getById(id);
+  }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public TaskResponseDto create(
-            @Valid @RequestBody TaskCreateDto dto) {
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  public TaskResponseDto create(@Valid @RequestBody TaskCreateDto dto) {
 
-        return taskService.create(dto);
-    }
+    return taskService.create(dto);
+  }
 
-    @PutMapping("/{id}")
-    public TaskResponseDto update(
-            @PathVariable Long id,
-            @Valid @RequestBody TaskUpdateDto dto) {
+  @PutMapping("/{id}")
+  public TaskResponseDto update(@PathVariable Long id, @Valid @RequestBody TaskUpdateDto dto) {
 
-        return taskService.update(id, dto);
-    }
+    return taskService.update(id, dto);
+  }
 
-    @DeleteMapping("/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        taskService.delete(id);
-    }
+  @DeleteMapping("/{id}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void delete(@PathVariable Long id) {
+    taskService.delete(id);
+  }
 }

@@ -11,109 +11,129 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
+import org.hibernate.Hibernate;
 
 @Entity
 @Table(name = "tasks")
 public class Task {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    private String name;
+  private String name;
 
-    private Integer index;
+  private Integer index;
 
-    private String description;
+  private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "task_status_id", nullable = false)
-    private TaskStatus taskStatus;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "task_status_id", nullable = false)
+  private TaskStatus taskStatus;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assignee_id")
-    private User assignee;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "assignee_id")
+  private User assignee;
 
-    @ManyToMany
-    @JoinTable(
-            name = "task_labels",
-            joinColumns = @JoinColumn(name = "task_id"),
-            inverseJoinColumns = @JoinColumn(name = "label_id")
-    )
-    private Set<Label> labels = new HashSet<>();
+  @ManyToMany
+  @JoinTable(
+      name = "task_labels",
+      joinColumns = @JoinColumn(name = "task_id"),
+      inverseJoinColumns = @JoinColumn(name = "label_id"))
+  private Set<Label> labels = new HashSet<>();
 
-    private LocalDateTime createdAt;
+  private LocalDateTime createdAt;
 
-    @PrePersist
-    public void prePersist() {
-        createdAt = LocalDateTime.now();
+  @PrePersist
+  public void prePersist() {
+    createdAt = LocalDateTime.now();
+  }
+
+  public Long getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public Integer getIndex() {
+    return index;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public TaskStatus getTaskStatus() {
+    return taskStatus;
+  }
+
+  public User getAssignee() {
+    return assignee;
+  }
+
+  public Set<Label> getLabels() {
+    return labels;
+  }
+
+  public LocalDateTime getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public void setIndex(Integer index) {
+    this.index = index;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public void setTaskStatus(TaskStatus taskStatus) {
+    this.taskStatus = taskStatus;
+  }
+
+  public void setAssignee(User assignee) {
+    this.assignee = assignee;
+  }
+
+  public void setLabels(Set<Label> labels) {
+    this.labels = labels;
+  }
+
+  public void setCreatedAt(LocalDateTime createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  @Override
+  public final boolean equals(Object object) {
+    if (this == object) {
+      return true;
     }
 
-    public Long getId() {
-        return id;
+    if (object == null || Hibernate.getClass(this) != Hibernate.getClass(object)) {
+      return false;
     }
 
-    public String getName() {
-        return name;
-    }
+    Task task = (Task) object;
 
-    public Integer getIndex() {
-        return index;
-    }
+    return id != null && Objects.equals(id, task.id);
+  }
 
-    public String getDescription() {
-        return description;
-    }
-
-    public TaskStatus getTaskStatus() {
-        return taskStatus;
-    }
-
-    public User getAssignee() {
-        return assignee;
-    }
-
-    public Set<Label> getLabels() {
-        return labels;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setIndex(Integer index) {
-        this.index = index;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setTaskStatus(TaskStatus taskStatus) {
-        this.taskStatus = taskStatus;
-    }
-
-    public void setAssignee(User assignee) {
-        this.assignee = assignee;
-    }
-
-    public void setLabels(Set<Label> labels) {
-        this.labels = labels;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+  @Override
+  public final int hashCode() {
+    return Hibernate.getClass(this).hashCode();
+  }
 }

@@ -1,15 +1,14 @@
 package hexlet.code.app.repository;
 
 import hexlet.code.app.model.TaskStatus;
-import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TaskStatusRepository extends JpaRepository<TaskStatus, Long> {
 
-    Optional<TaskStatus> findBySlug(String slug);
+  Optional<TaskStatus> findBySlug(String slug);
 
-    boolean existsBySlug(String slug);
+  boolean existsBySlug(String slug);
 
-    boolean existsByName(String name);
+  boolean existsByName(String name);
 }

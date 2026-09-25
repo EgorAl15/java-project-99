@@ -13,67 +13,65 @@ import org.springframework.stereotype.Component;
 @Component
 public class DataInitializer implements CommandLineRunner {
 
-    private final UserRepository userRepository;
-    private final TaskStatusRepository taskStatusRepository;
-    private final LabelRepository labelRepository;
-    private final PasswordEncoder passwordEncoder;
+  private final UserRepository userRepository;
+  private final TaskStatusRepository taskStatusRepository;
+  private final LabelRepository labelRepository;
+  private final PasswordEncoder passwordEncoder;
 
-    public DataInitializer(
-            UserRepository userRepository,
-            TaskStatusRepository taskStatusRepository,
-            LabelRepository labelRepository,
-            PasswordEncoder passwordEncoder) {
-        this.userRepository = userRepository;
-        this.taskStatusRepository = taskStatusRepository;
-        this.labelRepository = labelRepository;
-        this.passwordEncoder = passwordEncoder;
+  public DataInitializer(
+      UserRepository userRepository,
+      TaskStatusRepository taskStatusRepository,
+      LabelRepository labelRepository,
+      PasswordEncoder passwordEncoder) {
+    this.userRepository = userRepository;
+    this.taskStatusRepository = taskStatusRepository;
+    this.labelRepository = labelRepository;
+    this.passwordEncoder = passwordEncoder;
+  }
+
+  @Override
+  public void run(String... args) {
+    createAdminIfNotExists();
+
+    createStatusIfNotExists("Draft", "draft");
+    createStatusIfNotExists("To Review", "to_review");
+    createStatusIfNotExists("To Be Fixed", "to_be_fixed");
+    createStatusIfNotExists("To Publish", "to_publish");
+    createStatusIfNotExists("Published", "published");
+
+    createLabelIfNotExists("feature");
+    createLabelIfNotExists("bug");
+  }
+
+  private void createAdminIfNotExists() {
+    if (!userRepository.existsByEmail("hexlet@example.com")) {
+      var user = new User();
+
+      user.setEmail("hexlet@example.com");
+      user.setPassword(passwordEncoder.encode("qwerty"));
+
+      userRepository.save(user);
     }
+  }
 
-    @Override
-    public void run(String... args) {
-        createAdminIfNotExists();
+  private void createStatusIfNotExists(String name, String slug) {
 
-        createStatusIfNotExists("Draft", "draft");
-        createStatusIfNotExists("To Review", "to_review");
-        createStatusIfNotExists("To Be Fixed", "to_be_fixed");
-        createStatusIfNotExists("To Publish", "to_publish");
-        createStatusIfNotExists("Published", "published");
+    if (taskStatusRepository.findBySlug(slug).isEmpty()) {
+      var status = new TaskStatus();
 
-        createLabelIfNotExists("feature");
-        createLabelIfNotExists("bug");
+      status.setName(name);
+      status.setSlug(slug);
+
+      taskStatusRepository.save(status);
     }
+  }
 
-    private void createAdminIfNotExists() {
-        if (!userRepository.existsByEmail("hexlet@example.com")) {
-            var user = new User();
+  private void createLabelIfNotExists(String name) {
+    if (labelRepository.findByName(name).isEmpty()) {
+      var label = new Label();
+      label.setName(name);
 
-            user.setEmail("hexlet@example.com");
-            user.setPassword(passwordEncoder.encode("qwerty"));
-
-            userRepository.save(user);
-        }
+      labelRepository.save(label);
     }
-
-    private void createStatusIfNotExists(
-            String name,
-            String slug) {
-
-        if (taskStatusRepository.findBySlug(slug).isEmpty()) {
-            var status = new TaskStatus();
-
-            status.setName(name);
-            status.setSlug(slug);
-
-            taskStatusRepository.save(status);
-        }
-    }
-
-    private void createLabelIfNotExists(String name) {
-        if (labelRepository.findByName(name).isEmpty()) {
-            var label = new Label();
-            label.setName(name);
-
-            labelRepository.save(label);
-        }
-    }
+  }
 }

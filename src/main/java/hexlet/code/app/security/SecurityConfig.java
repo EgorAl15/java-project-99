@@ -19,112 +19,76 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final CustomUserDetailsService userDetailsService;
-    private final JwtService jwtService;
+  private final CustomUserDetailsService userDetailsService;
+  private final JwtService jwtService;
 
-    public SecurityConfig(
-            CustomUserDetailsService userDetailsService,
-            JwtService jwtService) {
+  public SecurityConfig(CustomUserDetailsService userDetailsService, JwtService jwtService) {
 
-        this.userDetailsService = userDetailsService;
-        this.jwtService = jwtService;
-    }
+    this.userDetailsService = userDetailsService;
+    this.jwtService = jwtService;
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider(
-            PasswordEncoder passwordEncoder) {
+  @Bean
+  public DaoAuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
 
-        var provider =
-                new DaoAuthenticationProvider(userDetailsService);
+    var provider = new DaoAuthenticationProvider(userDetailsService);
 
-        provider.setPasswordEncoder(passwordEncoder);
+    provider.setPasswordEncoder(passwordEncoder);
 
-        return provider;
-    }
+    return provider;
+  }
 
-    @Bean
-    public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration)
-            throws Exception {
+  @Bean
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration)
+      throws Exception {
 
-        return configuration.getAuthenticationManager();
-    }
+    return configuration.getAuthenticationManager();
+  }
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            DaoAuthenticationProvider authenticationProvider)
-            throws Exception {
+  @Bean
+  public SecurityFilterChain securityFilterChain(
+      HttpSecurity http, DaoAuthenticationProvider authenticationProvider) throws Exception {
 
-        var jwtAuthenticationFilter =
-                new JwtAuthenticationFilter(
-                        jwtService,
-                        userDetailsService
-                );
+    var jwtAuthenticationFilter = new JwtAuthenticationFilter(jwtService, userDetailsService);
 
-        http
-                .csrf(csrf -> csrf.disable())
+    http.csrf(csrf -> csrf.disable())
+        .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authenticationProvider(authenticationProvider)
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers(
+                        "/",
+                        "/index.html",
+                        "/assets/**",
+                        "/favicon.ico",
+                        "/welcome",
+                        "/api/login",
+                        "/h2-console/**",
+                        "/error",
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
+        .exceptionHandling(
+            exception ->
+                exception
+                    .authenticationEntryPoint(
+                        (request, response, authException) ->
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                    .accessDeniedHandler(
+                        (request, response, accessDeniedException) ->
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN)))
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
-                .headers(headers ->
-                        headers.frameOptions(
-                                frame -> frame.sameOrigin()
-                        )
-                )
-
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
-                )
-
-                .authenticationProvider(authenticationProvider)
-
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/",
-                                "/index.html",
-                                "/assets/**",
-                                "/favicon.ico",
-                                "/welcome",
-                                "/api/login",
-                                "/h2-console/**",
-                                "/error",
-                                "/swagger-ui.html",
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
-
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(
-                                (request, response, authException) ->
-                                        response.sendError(
-                                                HttpServletResponse
-                                                        .SC_UNAUTHORIZED
-                                        )
-                        )
-                        .accessDeniedHandler(
-                                (request,
-                                 response,
-                                 accessDeniedException) ->
-                                        response.sendError(
-                                                HttpServletResponse
-                                                        .SC_FORBIDDEN
-                                        )
-                        )
-                )
-
-                .addFilterBefore(
-                        jwtAuthenticationFilter,
-                        UsernamePasswordAuthenticationFilter.class
-                );
-
-        return http.build();
-    }
+    return http.build();
+  }
 }

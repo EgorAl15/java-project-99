@@ -1,6 +1,7 @@
 package hexlet.code.app.exception;
 
 import jakarta.validation.ConstraintViolationException;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -12,167 +13,97 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Map;
-
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String, String>> handleResourceNotFound(
-            ResourceNotFoundException exception) {
+  @ExceptionHandler(ResourceNotFoundException.class)
+  public ResponseEntity<Map<String, String>> handleResourceNotFound(
+      ResourceNotFoundException exception) {
 
-        log.warn(
-                "Resource not found: {}",
-                exception.getMessage()
-        );
+    log.warn("Resource not found: {}", exception.getMessage());
 
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(Map.of(
-                        "error",
-                        exception.getMessage()
-                ));
-    }
+    return ResponseEntity.status(HttpStatus.NOT_FOUND)
+        .body(Map.of("error", exception.getMessage()));
+  }
 
-    @ExceptionHandler(ResourceConflictException.class)
-    public ResponseEntity<Map<String, String>> handleResourceConflict(
-            ResourceConflictException exception) {
+  @ExceptionHandler(ResourceConflictException.class)
+  public ResponseEntity<Map<String, String>> handleResourceConflict(
+      ResourceConflictException exception) {
 
-        log.warn(
-                "Resource conflict: {}",
-                exception.getMessage()
-        );
+    log.warn("Resource conflict: {}", exception.getMessage());
 
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(Map.of(
-                        "error",
-                        exception.getMessage()
-                ));
-    }
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", exception.getMessage()));
+  }
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(
-            DataIntegrityViolationException exception) {
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<Map<String, String>> handleDataIntegrityViolation(
+      DataIntegrityViolationException exception) {
 
-        log.warn(
-                "Data integrity violation",
-                exception
-        );
+    log.warn("Data integrity violation", exception);
 
-        return ResponseEntity
-                .status(HttpStatus.CONFLICT)
-                .body(Map.of(
-                        "error",
-                        "Data integrity violation"
-                ));
-    }
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(Map.of("error", "Data integrity violation"));
+  }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidation(
-            MethodArgumentNotValidException exception) {
+  @ExceptionHandler(MethodArgumentNotValidException.class)
+  public ResponseEntity<Map<String, String>> handleValidation(
+      MethodArgumentNotValidException exception) {
 
-        var fieldError =
-                exception.getBindingResult()
-                        .getFieldErrors()
-                        .stream()
-                        .findFirst();
+    var fieldError = exception.getBindingResult().getFieldErrors().stream().findFirst();
 
-        var message = fieldError
-                .map(error ->
-                        error.getField()
-                                + ": "
-                                + error.getDefaultMessage()
-                )
-                .orElse("Validation failed");
+    var message =
+        fieldError
+            .map(error -> error.getField() + ": " + error.getDefaultMessage())
+            .orElse("Validation failed");
 
-        log.warn(
-                "Validation failed: {}",
-                message
-        );
+    log.warn("Validation failed: {}", message);
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of(
-                        "error",
-                        message
-                ));
-    }
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", message));
+  }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Map<String, String>> handleConstraintViolation(
-            ConstraintViolationException exception) {
+  @ExceptionHandler(ConstraintViolationException.class)
+  public ResponseEntity<Map<String, String>> handleConstraintViolation(
+      ConstraintViolationException exception) {
 
-        log.warn(
-                "Constraint violation: {}",
-                exception.getMessage()
-        );
+    log.warn("Constraint violation: {}", exception.getMessage());
 
-        return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
-                .body(Map.of(
-                        "error",
-                        exception.getMessage()
-                ));
-    }
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body(Map.of("error", exception.getMessage()));
+  }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> handleBadCredentials(
-            BadCredentialsException exception) {
+  @ExceptionHandler(BadCredentialsException.class)
+  public ResponseEntity<Map<String, String>> handleBadCredentials(
+      BadCredentialsException exception) {
 
-        log.warn("Authentication failed");
+    log.warn("Authentication failed");
 
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of(
-                        "error",
-                        "Unauthorized"
-                ));
-    }
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized"));
+  }
 
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<Map<String, String>> handleAuthentication(
-            AuthenticationException exception) {
+  @ExceptionHandler(AuthenticationException.class)
+  public ResponseEntity<Map<String, String>> handleAuthentication(
+      AuthenticationException exception) {
 
-        log.warn("Authentication failed");
+    log.warn("Authentication failed");
 
-        return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of(
-                        "error",
-                        "Unauthorized"
-                ));
-    }
+    return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Unauthorized"));
+  }
 
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, String>> handleAccessDenied(
-            AccessDeniedException exception) {
+  @ExceptionHandler(AccessDeniedException.class)
+  public ResponseEntity<Map<String, String>> handleAccessDenied(AccessDeniedException exception) {
 
-        log.warn("Access denied");
+    log.warn("Access denied");
 
-        return ResponseEntity
-                .status(HttpStatus.FORBIDDEN)
-                .body(Map.of(
-                        "error",
-                        "Forbidden"
-                ));
-    }
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Forbidden"));
+  }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleException(
-            Exception exception) {
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Map<String, String>> handleException(Exception exception) {
 
-        log.error(
-                "Unexpected application error",
-                exception
-        );
+    log.error("Unexpected application error", exception);
 
-        return ResponseEntity
-                .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of(
-                        "error",
-                        "Internal server error"
-                ));
-    }
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        .body(Map.of("error", "Internal server error"));
+  }
 }
