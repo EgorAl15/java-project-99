@@ -20,9 +20,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
+    private final JwtService jwtService;
 
-    public SecurityConfig(CustomUserDetailsService userDetailsService) {
+    public SecurityConfig(
+            CustomUserDetailsService userDetailsService,
+            JwtService jwtService) {
+
         this.userDetailsService = userDetailsService;
+        this.jwtService = jwtService;
     }
 
     @Bean
@@ -34,7 +39,9 @@ public class SecurityConfig {
     public DaoAuthenticationProvider authenticationProvider(
             PasswordEncoder passwordEncoder) {
 
-        var provider = new DaoAuthenticationProvider(userDetailsService);
+        var provider =
+                new DaoAuthenticationProvider(userDetailsService);
+
         provider.setPasswordEncoder(passwordEncoder);
 
         return provider;
@@ -42,21 +49,31 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationManager authenticationManager(
-            AuthenticationConfiguration configuration) throws Exception {
+            AuthenticationConfiguration configuration)
+            throws Exception {
+
         return configuration.getAuthenticationManager();
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
-            JwtAuthenticationFilter jwtAuthenticationFilter,
-            DaoAuthenticationProvider authenticationProvider) throws Exception {
+            DaoAuthenticationProvider authenticationProvider)
+            throws Exception {
+
+        var jwtAuthenticationFilter =
+                new JwtAuthenticationFilter(
+                        jwtService,
+                        userDetailsService
+                );
 
         http
                 .csrf(csrf -> csrf.disable())
 
                 .headers(headers ->
-                        headers.frameOptions(frame -> frame.sameOrigin())
+                        headers.frameOptions(
+                                frame -> frame.sameOrigin()
+                        )
                 )
 
                 .sessionManagement(session ->
@@ -88,13 +105,17 @@ public class SecurityConfig {
                         .authenticationEntryPoint(
                                 (request, response, authException) ->
                                         response.sendError(
-                                                HttpServletResponse.SC_UNAUTHORIZED
+                                                HttpServletResponse
+                                                        .SC_UNAUTHORIZED
                                         )
                         )
                         .accessDeniedHandler(
-                                (request, response, accessDeniedException) ->
+                                (request,
+                                 response,
+                                 accessDeniedException) ->
                                         response.sendError(
-                                                HttpServletResponse.SC_FORBIDDEN
+                                                HttpServletResponse
+                                                        .SC_FORBIDDEN
                                         )
                         )
                 )

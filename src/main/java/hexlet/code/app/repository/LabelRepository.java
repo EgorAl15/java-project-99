@@ -1,6 +1,6 @@
 package hexlet.code.app.repository;
 
-import hexlet.code.app.Label;
+import hexlet.code.app.model.Label;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

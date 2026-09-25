@@ -8,7 +8,16 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -27,7 +36,10 @@ public class UserController {
         var users = userService.getAll();
 
         var headers = new HttpHeaders();
-        headers.add("X-Total-Count", String.valueOf(users.size()));
+        headers.add(
+                "X-Total-Count",
+                String.valueOf(users.size())
+        );
 
         return ResponseEntity
                 .ok()
@@ -42,19 +54,24 @@ public class UserController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public UserResponseDto create(@Valid @RequestBody UserCreateDto dto) {
+    public UserResponseDto create(
+            @Valid @RequestBody UserCreateDto dto) {
+
         return userService.create(dto);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@userUtils.isCurrentUser(#id)")
     public UserResponseDto update(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateDto dto) {
+
         return userService.update(id, dto);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @PreAuthorize("@userUtils.isCurrentUser(#id)")
     public void delete(@PathVariable Long id) {
         userService.delete(id);
     }

@@ -1,7 +1,7 @@
 package hexlet.code.app.service;
 
-import hexlet.code.app.Label;
-import hexlet.code.app.Task;
+import hexlet.code.app.model.Label;
+import hexlet.code.app.model.Task;
 import hexlet.code.app.dto.TaskCreateDto;
 import hexlet.code.app.dto.TaskResponseDto;
 import hexlet.code.app.dto.TaskUpdateDto;

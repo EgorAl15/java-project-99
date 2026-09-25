@@ -1,12 +1,10 @@
 package hexlet.code.app.service;
 
-import hexlet.code.app.TaskStatus;
 import hexlet.code.app.dto.TaskStatusCreateDto;
 import hexlet.code.app.dto.TaskStatusResponseDto;
 import hexlet.code.app.dto.TaskStatusUpdateDto;
-import hexlet.code.app.exception.ResourceConflictException;
 import hexlet.code.app.exception.ResourceNotFoundException;
-import hexlet.code.app.repository.TaskRepository;
+import hexlet.code.app.model.TaskStatus;
 import hexlet.code.app.repository.TaskStatusRepository;
 import org.springframework.stereotype.Service;
 
@@ -16,13 +14,11 @@ import java.util.List;
 public class TaskStatusService {
 
     private final TaskStatusRepository repository;
-    private final TaskRepository taskRepository;
 
     public TaskStatusService(
-            TaskStatusRepository repository,
-            TaskRepository taskRepository) {
+            TaskStatusRepository repository) {
+
         this.repository = repository;
-        this.taskRepository = taskRepository;
     }
 
     public List<TaskStatusResponseDto> getAll() {
@@ -35,20 +31,16 @@ public class TaskStatusService {
     public TaskStatusResponseDto getById(Long id) {
         var status = repository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Task status not found")
+                        new ResourceNotFoundException(
+                                "Task status not found"
+                        )
                 );
 
         return toDto(status);
     }
 
-    public TaskStatusResponseDto create(TaskStatusCreateDto dto) {
-        if (repository.existsByName(dto.getName())) {
-            throw new IllegalArgumentException("Name already exists");
-        }
-
-        if (repository.existsBySlug(dto.getSlug())) {
-            throw new IllegalArgumentException("Slug already exists");
-        }
+    public TaskStatusResponseDto create(
+            TaskStatusCreateDto dto) {
 
         var status = new TaskStatus();
 
@@ -64,7 +56,9 @@ public class TaskStatusService {
 
         var status = repository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Task status not found")
+                        new ResourceNotFoundException(
+                                "Task status not found"
+                        )
                 );
 
         if (dto.getName() != null) {
@@ -81,19 +75,17 @@ public class TaskStatusService {
     public void delete(Long id) {
         var status = repository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Task status not found")
+                        new ResourceNotFoundException(
+                                "Task status not found"
+                        )
                 );
-
-        if (taskRepository.existsByTaskStatus(status)) {
-            throw new ResourceConflictException(
-                    "Cannot delete task status used by tasks"
-            );
-        }
 
         repository.delete(status);
     }
 
-    private TaskStatusResponseDto toDto(TaskStatus status) {
+    private TaskStatusResponseDto toDto(
+            TaskStatus status) {
+
         return new TaskStatusResponseDto(
                 status.getId(),
                 status.getName(),

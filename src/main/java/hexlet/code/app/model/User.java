@@ -1,5 +1,6 @@
-package hexlet.code.app;
+package hexlet.code.app.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -19,8 +20,13 @@ public class User {
     private Long id;
 
     private String firstName;
+
     private String lastName;
+
+    @Column(unique = true, nullable = false)
     private String email;
+
+    @Column(nullable = false)
     private String password;
 
     @CreationTimestamp

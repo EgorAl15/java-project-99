@@ -1,6 +1,6 @@
 package hexlet.code.app.specification;
 
-import hexlet.code.app.Task;
+import hexlet.code.app.model.Task;
 import org.springframework.data.jpa.domain.Specification;
 
 public class TaskSpecification {

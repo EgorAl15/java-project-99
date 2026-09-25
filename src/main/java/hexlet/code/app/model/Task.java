@@ -1,4 +1,4 @@
-package hexlet.code.app;
+package hexlet.code.app.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;

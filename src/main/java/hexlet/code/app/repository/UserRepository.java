@@ -1,6 +1,6 @@
 package hexlet.code.app.repository;
 
-import hexlet.code.app.User;
+import hexlet.code.app.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

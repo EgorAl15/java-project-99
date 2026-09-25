@@ -1,7 +1,7 @@
 package hexlet.code.app.controller;
 
-import hexlet.code.app.TaskStatus;
-import hexlet.code.app.User;
+import hexlet.code.app.model.TaskStatus;
+import hexlet.code.app.model.User;
 import hexlet.code.app.repository.TaskRepository;
 import hexlet.code.app.repository.TaskStatusRepository;
 import hexlet.code.app.repository.UserRepository;
