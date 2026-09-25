@@ -1,5 +1,6 @@
 package hexlet.code.app.exception;
 
+import io.sentry.Sentry;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -102,6 +103,8 @@ public class GlobalExceptionHandler {
   public ResponseEntity<Map<String, String>> handleException(Exception exception) {
 
     log.error("Unexpected application error", exception);
+
+    Sentry.captureException(exception);
 
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(Map.of("error", "Internal server error"));
