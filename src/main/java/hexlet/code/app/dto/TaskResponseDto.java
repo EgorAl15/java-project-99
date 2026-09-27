@@ -77,4 +77,9 @@ public class TaskResponseDto {
   public Set<Long> getLabels() {
     return labels;
   }
+
+  @JsonProperty("taskLabelIds")
+  public Set<Long> getTaskLabelIds() {
+    return labels;
+  }
 }

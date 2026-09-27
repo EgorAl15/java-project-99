@@ -1,5 +1,6 @@
 package hexlet.code.app.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Set;
@@ -22,6 +23,7 @@ public class TaskCreateDto {
   @JsonProperty("assignee_id")
   private Long assigneeId;
 
+  @JsonAlias("taskLabelIds")
   private Set<Long> labels;
 
   public String getName() {
