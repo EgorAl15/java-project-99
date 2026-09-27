@@ -7,6 +7,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hexlet.code.app.dto.LoginRequest;
+import hexlet.code.app.dto.UserCreateDto;
+import hexlet.code.app.dto.UserUpdateDto;
 import hexlet.code.app.model.User;
 import hexlet.code.app.repository.TaskRepository;
 import hexlet.code.app.repository.UserRepository;
@@ -24,6 +28,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class UserControllerTest {
 
   @Autowired private MockMvc mockMvc;
+
+  @Autowired private ObjectMapper objectMapper;
 
   @Autowired private UserRepository userRepository;
 
@@ -45,18 +51,16 @@ class UserControllerTest {
 
   private String getToken(String username, String password) throws Exception {
 
-    var request =
-        """
-                {
-                  "username": "%s",
-                  "password": "%s"
-                }
-                """
-            .formatted(username, password);
+    var request = new LoginRequest();
+    request.setUsername(username);
+    request.setPassword(password);
 
     var result =
         mockMvc
-            .perform(post("/api/login").contentType(MediaType.APPLICATION_JSON).content(request))
+            .perform(
+                post("/api/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -79,22 +83,19 @@ class UserControllerTest {
 
   @Test
   void testCreateUser() throws Exception {
-    var request =
-        """
-                {
-                  "email": "john@example.com",
-                  "firstName": "John",
-                  "lastName": "Doe",
-                  "password": "secret"
-                }
-                """;
+    var request = new UserCreateDto();
+
+    request.setEmail("john@example.com");
+    request.setFirstName("John");
+    request.setLastName("Doe");
+    request.setPassword("secret");
 
     mockMvc
         .perform(
             post("/api/users")
                 .header("Authorization", "Bearer " + getAdminToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.email").value("john@example.com"))
         .andExpect(jsonPath("$.firstName").value("John"))
@@ -141,19 +142,15 @@ class UserControllerTest {
 
     var token = getToken("john@example.com", "secret");
 
-    var request =
-        """
-                {
-                  "email": "new@example.com"
-                }
-                """;
+    var request = new UserUpdateDto();
+    request.setEmail("new@example.com");
 
     mockMvc
         .perform(
             put("/api/users/" + user.getId())
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.email").value("new@example.com"))
         .andExpect(jsonPath("$.firstName").value("John"))
@@ -178,20 +175,17 @@ class UserControllerTest {
 
   @Test
   void testInvalidUserReturns400() throws Exception {
-    var request =
-        """
-                {
-                  "email": "bad-email",
-                  "password": "12"
-                }
-                """;
+    var request = new UserCreateDto();
+
+    request.setEmail("bad-email");
+    request.setPassword("12");
 
     mockMvc
         .perform(
             post("/api/users")
                 .header("Authorization", "Bearer " + getAdminToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
   }
 
@@ -204,31 +198,30 @@ class UserControllerTest {
 
   @Test
   void testUsersRequireAuthentication() throws Exception {
+
     mockMvc.perform(get("/api/users")).andExpect(status().isUnauthorized());
   }
 
   @Test
   void testCannotUpdateAnotherUser() throws Exception {
+
     var otherUser = createUser("other@example.com", "secret");
 
-    var request =
-        """
-                {
-                  "firstName": "Changed"
-                }
-                """;
+    var request = new UserUpdateDto();
+    request.setFirstName("Changed");
 
     mockMvc
         .perform(
             put("/api/users/" + otherUser.getId())
                 .header("Authorization", "Bearer " + getAdminToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isForbidden());
   }
 
   @Test
   void testCannotDeleteAnotherUser() throws Exception {
+
     var otherUser = createUser("other@example.com", "secret");
 
     mockMvc
@@ -240,31 +233,33 @@ class UserControllerTest {
 
   @Test
   void testLoginWithWrongPasswordReturns401() throws Exception {
-    var request =
-        """
-                {
-                  "username": "hexlet@example.com",
-                  "password": "wrong-password"
-                }
-                """;
+
+    var request = new LoginRequest();
+
+    request.setUsername("hexlet@example.com");
+    request.setPassword("wrong-password");
 
     mockMvc
-        .perform(post("/api/login").contentType(MediaType.APPLICATION_JSON).content(request))
+        .perform(
+            post("/api/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isUnauthorized());
   }
 
   @Test
   void testLoginUnknownUserReturns401() throws Exception {
-    var request =
-        """
-                {
-                  "username": "unknown@example.com",
-                  "password": "qwerty"
-                }
-                """;
+
+    var request = new LoginRequest();
+
+    request.setUsername("unknown@example.com");
+    request.setPassword("qwerty");
 
     mockMvc
-        .perform(post("/api/login").contentType(MediaType.APPLICATION_JSON).content(request))
+        .perform(
+            post("/api/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isUnauthorized());
   }
 }

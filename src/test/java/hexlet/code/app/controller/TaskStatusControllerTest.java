@@ -10,6 +10,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hexlet.code.app.dto.LoginRequest;
+import hexlet.code.app.dto.TaskStatusCreateDto;
+import hexlet.code.app.dto.TaskStatusUpdateDto;
 import hexlet.code.app.model.TaskStatus;
 import hexlet.code.app.model.User;
 import hexlet.code.app.repository.TaskRepository;
@@ -29,6 +33,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class TaskStatusControllerTest {
 
   @Autowired private MockMvc mockMvc;
+
+  @Autowired private ObjectMapper objectMapper;
 
   @Autowired private TaskStatusRepository taskStatusRepository;
 
@@ -52,17 +58,16 @@ class TaskStatusControllerTest {
   }
 
   private String getToken() throws Exception {
-    var request =
-        """
-                {
-                  "username": "hexlet@example.com",
-                  "password": "qwerty"
-                }
-                """;
+    var request = new LoginRequest();
+    request.setUsername("hexlet@example.com");
+    request.setPassword("qwerty");
 
     var result =
         mockMvc
-            .perform(post("/api/login").contentType(MediaType.APPLICATION_JSON).content(request))
+            .perform(
+                post("/api/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -105,20 +110,17 @@ class TaskStatusControllerTest {
 
   @Test
   void testCreateStatus() throws Exception {
-    var request =
-        """
-                {
-                  "name": "Test Status",
-                  "slug": "test_status"
-                }
-                """;
+    var request = new TaskStatusCreateDto();
+
+    request.setName("Test Status");
+    request.setSlug("test_status");
 
     mockMvc
         .perform(
             post("/api/task_statuses")
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.name").value("Test Status"))
         .andExpect(jsonPath("$.slug").value("test_status"));
@@ -126,25 +128,23 @@ class TaskStatusControllerTest {
 
   @Test
   void testUpdateStatusPartially() throws Exception {
+
     var taskStatus = new TaskStatus();
     taskStatus.setName("Old Status");
     taskStatus.setSlug("old_status");
 
     taskStatus = taskStatusRepository.save(taskStatus);
 
-    var request =
-        """
-                {
-                  "name": "Updated Status"
-                }
-                """;
+    var request = new TaskStatusUpdateDto();
+
+    request.setName("Updated Status");
 
     mockMvc
         .perform(
             put("/api/task_statuses/" + taskStatus.getId())
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("Updated Status"))
         .andExpect(jsonPath("$.slug").value("old_status"));
@@ -173,25 +173,24 @@ class TaskStatusControllerTest {
 
   @Test
   void testInvalidStatusReturns400() throws Exception {
-    var request =
-        """
-                {
-                  "name": "",
-                  "slug": ""
-                }
-                """;
+
+    var request = new TaskStatusCreateDto();
+
+    request.setName("");
+    request.setSlug("");
 
     mockMvc
         .perform(
             post("/api/task_statuses")
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void testStatusesRequireAuthentication() throws Exception {
+
     mockMvc.perform(get("/api/task_statuses")).andExpect(status().isUnauthorized());
   }
 

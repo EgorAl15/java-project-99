@@ -70,7 +70,6 @@ public class SecurityConfig {
                         "/favicon.ico",
                         "/welcome",
                         "/api/login",
-                        "/api/test-error",
                         "/h2-console/**",
                         "/error",
                         "/swagger-ui.html",

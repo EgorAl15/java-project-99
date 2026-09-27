@@ -8,6 +8,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hexlet.code.app.dto.LoginRequest;
+import hexlet.code.app.dto.TaskCreateDto;
+import hexlet.code.app.dto.TaskUpdateDto;
 import hexlet.code.app.model.Label;
 import hexlet.code.app.model.Task;
 import hexlet.code.app.model.TaskStatus;
@@ -31,6 +35,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class TaskControllerTest {
 
   @Autowired private MockMvc mockMvc;
+
+  @Autowired private ObjectMapper objectMapper;
 
   @Autowired private TaskRepository taskRepository;
 
@@ -80,17 +86,17 @@ class TaskControllerTest {
   }
 
   private String getToken() throws Exception {
-    var request =
-        """
-                {
-                  "username": "hexlet@example.com",
-                  "password": "qwerty"
-                }
-                """;
+    var request = new LoginRequest();
+
+    request.setUsername("hexlet@example.com");
+    request.setPassword("qwerty");
 
     var result =
         mockMvc
-            .perform(post("/api/login").contentType(MediaType.APPLICATION_JSON).content(request))
+            .perform(
+                post("/api/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -99,25 +105,21 @@ class TaskControllerTest {
 
   @Test
   void testCreateTask() throws Exception {
-    var request =
-        """
-                {
-                  "index": 12,
-                  "assignee_id": %d,
-                  "title": "Test title",
-                  "content": "Test content",
-                  "status": "draft",
-                  "labels": [%d, %d]
-                }
-                """
-            .formatted(user.getId(), feature.getId(), bug.getId());
+    var request = new TaskCreateDto();
+
+    request.setIndex(12);
+    request.setAssigneeId(user.getId());
+    request.setName("Test title");
+    request.setDescription("Test content");
+    request.setStatusSlug("draft");
+    request.setLabels(Set.of(feature.getId(), bug.getId()));
 
     mockMvc
         .perform(
             post("/api/tasks")
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.index").value(12))
         .andExpect(jsonPath("$.assignee_id").value(user.getId()))
@@ -157,24 +159,21 @@ class TaskControllerTest {
 
   @Test
   void testUpdateTaskPartially() throws Exception {
+
     var task = createTask("Test title", "Test content", draftStatus, Set.of(feature, bug));
 
-    var request =
-        """
-                {
-                  "title": "Updated title",
-                  "content": "Updated content",
-                  "labels": [%d]
-                }
-                """
-            .formatted(bug.getId());
+    var request = new TaskUpdateDto();
+
+    request.setName("Updated title");
+    request.setDescription("Updated content");
+    request.setLabels(Set.of(bug.getId()));
 
     mockMvc
         .perform(
             put("/api/tasks/" + task.getId())
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.title").value("Updated title"))
         .andExpect(jsonPath("$.content").value("Updated content"))
@@ -200,30 +199,30 @@ class TaskControllerTest {
 
   @Test
   void testInvalidTaskReturns400() throws Exception {
-    var request =
-        """
-                {
-                  "title": "",
-                  "status": ""
-                }
-                """;
+
+    var request = new TaskCreateDto();
+
+    request.setName("");
+    request.setStatusSlug("");
 
     mockMvc
         .perform(
             post("/api/tasks")
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
   }
 
   @Test
   void testTasksRequireAuthentication() throws Exception {
+
     mockMvc.perform(get("/api/tasks")).andExpect(status().isUnauthorized());
   }
 
   @Test
   void testCannotDeleteAssignedUser() throws Exception {
+
     createTask("Test title", "Test content", draftStatus, Set.of(feature));
 
     mockMvc
@@ -234,6 +233,7 @@ class TaskControllerTest {
 
   @Test
   void testCannotDeleteUsedStatus() throws Exception {
+
     createTask("Test title", "Test content", draftStatus, Set.of(feature));
 
     mockMvc
@@ -245,6 +245,7 @@ class TaskControllerTest {
 
   @Test
   void testCannotDeleteUsedLabel() throws Exception {
+
     createTask("Test title", "Test content", draftStatus, Set.of(feature));
 
     mockMvc
@@ -270,19 +271,24 @@ class TaskControllerTest {
 
   @Test
   void testFilterByAssignee() throws Exception {
+
     createFilterTasks();
 
     var anotherUser = new User();
+
     anotherUser.setEmail("another@example.com");
     anotherUser.setPassword(passwordEncoder.encode("qwerty"));
+
     anotherUser = userRepository.save(anotherUser);
 
     var task = new Task();
+
     task.setName("Another user task");
     task.setDescription("Other task");
     task.setTaskStatus(draftStatus);
     task.setAssignee(anotherUser);
     task.setLabels(Set.of(feature));
+
     taskRepository.save(task);
 
     mockMvc
@@ -325,6 +331,7 @@ class TaskControllerTest {
 
   @Test
   void testFilterByAllParameters() throws Exception {
+
     createFilterTasks();
 
     mockMvc

@@ -8,6 +8,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import hexlet.code.app.dto.LabelCreateDto;
+import hexlet.code.app.dto.LabelUpdateDto;
+import hexlet.code.app.dto.LoginRequest;
 import hexlet.code.app.model.Label;
 import hexlet.code.app.model.Task;
 import hexlet.code.app.model.TaskStatus;
@@ -31,6 +35,8 @@ import org.springframework.test.web.servlet.MockMvc;
 class LabelControllerTest {
 
   @Autowired private MockMvc mockMvc;
+
+  @Autowired private ObjectMapper objectMapper;
 
   @Autowired private LabelRepository labelRepository;
 
@@ -64,17 +70,17 @@ class LabelControllerTest {
   }
 
   private String getToken() throws Exception {
-    var request =
-        """
-                {
-                  "username": "hexlet@example.com",
-                  "password": "qwerty"
-                }
-                """;
+    var request = new LoginRequest();
+
+    request.setUsername("hexlet@example.com");
+    request.setPassword("qwerty");
 
     var result =
         mockMvc
-            .perform(post("/api/login").contentType(MediaType.APPLICATION_JSON).content(request))
+            .perform(
+                post("/api/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isOk())
             .andReturn();
 
@@ -83,19 +89,15 @@ class LabelControllerTest {
 
   @Test
   void testCreateLabel() throws Exception {
-    var request =
-        """
-                {
-                  "name": "feature"
-                }
-                """;
+    var request = new LabelCreateDto();
+    request.setName("feature");
 
     mockMvc
         .perform(
             post("/api/labels")
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isCreated())
         .andExpect(jsonPath("$.name").value("feature"));
   }
@@ -104,6 +106,7 @@ class LabelControllerTest {
   void testGetLabels() throws Exception {
     var label = new Label();
     label.setName("feature");
+
     labelRepository.save(label);
 
     mockMvc
@@ -132,19 +135,15 @@ class LabelControllerTest {
     label.setName("feature");
     label = labelRepository.save(label);
 
-    var request =
-        """
-                {
-                  "name": "updated"
-                }
-                """;
+    var request = new LabelUpdateDto();
+    request.setName("updated");
 
     mockMvc
         .perform(
             put("/api/labels/" + label.getId())
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name").value("updated"));
   }
@@ -168,19 +167,15 @@ class LabelControllerTest {
 
   @Test
   void testInvalidLabelReturns400() throws Exception {
-    var request =
-        """
-                {
-                  "name": "ab"
-                }
-                """;
+    var request = new LabelCreateDto();
+    request.setName("ab");
 
     mockMvc
         .perform(
             post("/api/labels")
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest());
   }
 
@@ -190,29 +185,27 @@ class LabelControllerTest {
     label.setName("feature");
     labelRepository.save(label);
 
-    var request =
-        """
-                {
-                  "name": "feature"
-                }
-                """;
+    var request = new LabelCreateDto();
+    request.setName("feature");
 
     mockMvc
         .perform(
             post("/api/labels")
                 .header("Authorization", "Bearer " + getToken())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(request))
+                .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isConflict());
   }
 
   @Test
   void testLabelsRequireAuthentication() throws Exception {
+
     mockMvc.perform(get("/api/labels")).andExpect(status().isUnauthorized());
   }
 
   @Test
   void testCannotDeleteUsedLabel() throws Exception {
+
     var label = new Label();
     label.setName("feature");
     label = labelRepository.save(label);
@@ -222,6 +215,7 @@ class LabelControllerTest {
     task.setTaskStatus(status);
     task.setAssignee(user);
     task.setLabels(Set.of(label));
+
     taskRepository.save(task);
 
     mockMvc
